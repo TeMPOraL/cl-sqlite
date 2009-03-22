@@ -435,6 +435,7 @@ This project has a <a href="http://common-lisp.net/mailman/listinfo/cl-sqlite-de
 <ul>
   <li><span style="color:gray">2009-01-23</span> <strong>0.1</strong> Initial version
   <li><span style="color:gray">2009-03-08</span> <strong>0.1.1</strong> Fixed bug with access to recently freed memory during statement preparation
+  <li><span style="color:gray">2009-03-22</span> <strong>0.1.2</strong> <a href="#disconnect">disconnect</a> function now ensures that all non-finalized statements are finalized before closing the database (otherwise errors are signaled when database is being closed).
 </ul>
 
 <br>&nbsp;<br><h3><a class=none name="ack">Acknowledgements</a></h3>
