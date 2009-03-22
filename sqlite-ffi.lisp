@@ -29,7 +29,8 @@
            :sqlite3-bind-blob
            :destructor-transient
            :destructor-static
-           :sqlite3-last-insert-rowid))
+           :sqlite3-last-insert-rowid
+           :sqlite3-next-stmt))
 
 (in-package :sqlite-ffi)
 
@@ -192,3 +193,7 @@
 
 (defcfun sqlite3-last-insert-rowid :int64
   (db p-sqlite3))
+
+(defcfun sqlite3-next-stmt p-sqlite3-stmt
+  (db p-sqlite3)
+  (stmt p-sqlite3-stmt))

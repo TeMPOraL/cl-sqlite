@@ -15,7 +15,8 @@
            :execute-single
            :execute-one-row-m-v
            :last-insert-rowid
-           :with-transaction))
+           :with-transaction
+           :with-open-database))
 
 (in-package :sqlite)
 
@@ -44,13 +45,12 @@
 (defun disconnect (handle)
   "Disconnects the given HANDLE from the database. All further operations on the handle are invalid."
   (sqlite.cache:purge-cache (cache handle))
-  (cond
-    ((typep handle 'sqlite-handle) (let ((error-code (sqlite-ffi:sqlite3-close (handle handle))))
-                                     (unless (eq error-code :ok)
-                                       (error "Received error code ~A when trying to close ~A (connected to ~A)" error-code handle (database-path handle)))))
-    ((cffi:pointerp handle) (let ((error-code (sqlite-ffi:sqlite3-close handle)))
-                                     (unless (eq error-code :ok)
-                                       (error "Received error code ~A when trying to close ~A" error-code handle))))))
+  (iter (for p-stmt = (sqlite-ffi:sqlite3-next-stmt (handle handle) (cffi:null-pointer)))
+        (until (cffi:null-pointer-p p-stmt))
+        (sqlite-ffi:sqlite3-finalize p-stmt))
+  (let ((error-code (sqlite-ffi:sqlite3-close (handle handle))))
+    (unless (eq error-code :ok)
+      (error "Received error code ~A when trying to close ~A (connected to ~A)" error-code handle (database-path handle)))))
 
 (defclass sqlite-statement ()
   ((db :reader db :initarg :db)
@@ -295,6 +295,12 @@ See BIND-PARAMETER for the list of supported parameter types."
          (if ,ok
              (execute-non-query ,db-var "commit transaction")
              (execute-non-query ,db-var "rollback transaction"))))))
+
+(defmacro with-open-database ((db path) &body body)
+  `(let ((,db (connect ,path)))
+     (unwind-protect
+          (progn ,@body)
+       (disconnect ,db))))
 
 (defmacro-driver (FOR vars IN-SQLITE-QUERY query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
   (let ((statement (gensym "STATEMENT-"))

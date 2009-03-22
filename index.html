@@ -68,6 +68,7 @@
       <li><a href="#statement-column-value"><code>statement-column-value</code></a>
       <li><a href="#step-statement"><code>step-statement</code></a>
       <li><a href="#with-transaction"><code>with-transaction</code></a>
+      <li><a href="#with-open-database"><code>with-open-database</code></a>
     </ol>
   <li><a href="#support">Support</a>
   <li><a href="#changelog">Changelog</a>
@@ -126,10 +127,11 @@
 
 <br>&nbsp;<br><h3><a class=none name="usage">Usage</a></h3>
 
-<p>Two functions are used to manage connections to the database:</p>
+<p>Two functions and a macro are used to manage connections to the database:</p>
 <ul>
-<li><a href="#connect">connect</a> connects to the database</li>
-<li><a href="#disconnect">disconnect</a> disconnects from the database</li>
+<li>Function <a href="#connect">connect</a> connects to the database</li>
+<li>Function <a href="#disconnect">disconnect</a> disconnects from the database</li>
+<li>Macro <a href="#with-open-database">with-open-database</a> opens the database and ensures that it is properly closed after the code is run</li>
 </ul>
 
 <p>To make queries to the database the following functions are provided:</p>
@@ -139,6 +141,8 @@
 <li><a href="#execute-one-row-m-v">execute-one-row-m-v</a> returns the first row of the result as multiple values</li>
 <li><a href="#execute-to-list">execute-to-list</a> returns all rows as the list of lists</li>
 </ul>
+
+<p>Macro <a href="#with-transaction">with-transaction</a> is used to execute code within transaction.</p>
 
 <p>Support for <a href="http://common-lisp.net/project/iterate/">ITERATE</a> is provided. Use the following clause:
   <blockquote><pre>(for (<i>vars</i>) in-sqlite-query <i>sql</i> on-database <i>db</i> &optional with-parameters (<i>&rest parameters</i>))</pre></blockquote>
@@ -199,7 +203,7 @@ Connect to the sqlite database at the given <i>database-path</i>. Returns the <a
 <p><br>[Function]<br><a class=none name='disconnect'><b>disconnect</b> <i>handle</i></a>
 <blockquote><br>
 
-Disconnects the given <i>handle</i> from the database. All further operations on the handle are invalid.
+Disconnects the given <i>handle</i> from the database. All further operations on the handle and on prepared statements (including freeing handle or statements) are invalid and will lead to memory corruption.
 
 </blockquote>
 
@@ -402,11 +406,23 @@ Returns T is successfully advanced to the next row and NIL if there are no more 
 <p><br>[Macro]<br><a class=none name='with-transaction'><b>with-transaction</b> <i>db</i> <tt>&amp;body</tt> <i>body</i></i></a>
 <blockquote><br>
 
-Wraps the <i>body</i> inside the transaction.
+Wraps the <i>body</i> inside the transaction. If <i>body</i> evaluates without error, transaction is commited. If evaluation of <i>body</i> is interrupted, transaction is rolled back.
 
 </blockquote>
 
 <!-- End of entry for WITH-TRANSACTION -->
+
+
+<!-- Entry for WITH-OPEN-DATABASE -->
+
+<p><br>[Macro]<br><a class=none name='with-open-database'><b>with-open-database</b> (<i>db</i> <i>path</i>) <tt>&amp;body</tt> <i>body</i></i></a>
+<blockquote><br>
+
+Executes the <i>body</i> with <i>db</i> being bound to the database handle for database located at <i>path</i>. Database is open before the <i>body</i> is run and it is ensured that database is closed after the evaluation of <i>body</i> finished or interrupted.
+
+</blockquote>
+
+<!-- End of entry for WITH-OPEN-DATABASE -->
 
 <br>&nbsp;<br><h3><a class=none name="support">Support</a></h3>
 
