@@ -238,8 +238,8 @@ Supported types:
     (let ((error-code (typecase value
                         (null (sqlite-ffi:sqlite3-bind-null (handle statement) index))
                         (integer (sqlite-ffi:sqlite3-bind-int64 (handle statement) index value))
-                        (single-float (sqlite-ffi:sqlite3-bind-double (handle statement) index (coerce value 'double-float)))
                         (double-float (sqlite-ffi:sqlite3-bind-double (handle statement) index value))
+                        (real (sqlite-ffi:sqlite3-bind-double (handle statement) index (coerce value 'double-float)))
                         (string (sqlite-ffi:sqlite3-bind-text (handle statement) index value -1 (sqlite-ffi:destructor-transient)))
                         ((vector (unsigned-byte 8)) (cffi:with-pointer-to-vector-data (ptr value)
                                                       (sqlite-ffi:sqlite3-bind-blob (handle statement) index ptr (length value) (sqlite-ffi:destructor-transient))))
