@@ -25,7 +25,8 @@
 (defclass sqlite-handle ()
   ((handle :accessor handle)
    (database-path :accessor database-path)
-   (cache :accessor cache))
+   (cache :accessor cache)
+   (statements :initform nil :accessor sqlite-handle-statements))
   (:documentation "Class that encapsulates the connection to the database. Use connect and disconnect."))
 
 (defmethod initialize-instance :after ((object sqlite-handle) &key (database-path ":memory:") &allow-other-keys)
@@ -45,9 +46,10 @@
 (defun disconnect (handle)
   "Disconnects the given HANDLE from the database. All further operations on the handle are invalid."
   (sqlite.cache:purge-cache (cache handle))
-  (iter (for p-stmt = (sqlite-ffi:sqlite3-next-stmt (handle handle) (cffi:null-pointer)))
-        (until (cffi:null-pointer-p p-stmt))
-        (sqlite-ffi:sqlite3-finalize p-stmt))
+  (iter (with statements = (copy-list (sqlite-handle-statements handle)))
+        (declare (dynamic-extent statements))
+        (for statement in statements)
+        (really-finalize-statement statement))
   (let ((error-code (sqlite-ffi:sqlite3-close (handle handle))))
     (unless (eq error-code :ok)
       (error "Received error code ~A when trying to close ~A (connected to ~A)" error-code handle (database-path handle)))))
@@ -92,24 +94,23 @@ SQL may have some positional (not named) parameters specified with question mark
 Example:
 
  select name from users where id = ?"
-  #+nil(make-instance 'sqlite-statement :db db :sql sql)
   (or (sqlite.cache:get-from-cache (cache db) sql)
-      (make-instance 'sqlite-statement :db db :sql sql)))
+      (let ((statement (make-instance 'sqlite-statement :db db :sql sql)))
+        (push statement (sqlite-handle-statements db))
+        statement)))
 
 (defun really-finalize-statement (statement)
+  (setf (sqlite-handle-statements (db statement))
+        (delete statement (sqlite-handle-statements (db statement))))
   (sqlite-ffi:sqlite3-finalize (handle statement)))
 
 (defun finalize-statement (statement)
   "Finalizes the statement and signals that associated resources may be released.
 Note: does not immediately release resources because statements are cached."
-  #+nil(really-finalize-statement statement)
   (progn
     (let ((error-code (sqlite-ffi:sqlite3-reset (handle statement))))
      (unless (eq error-code :ok)
        (error "When resetting statement ~A (sql: ~A), error ~A (~A)" statement (sql statement) error-code (sqlite-ffi:sqlite3-errmsg (handle (db statement))))))
-    #+nil(let ((error-code (sqlite-ffi:sqlite3-clear-bindings (handle statement))))
-      (unless (eq error-code :ok)
-        (error "When resetting statement ~A (sql: ~A), error ~A (~A)" statement (sql statement) error-code (sqlite-ffi:sqlite3-errmsg (handle (db statement))))))
     (sqlite.cache:put-to-cache (cache (db statement)) (sql statement) statement)))
 
 (defun step-statement (statement)
