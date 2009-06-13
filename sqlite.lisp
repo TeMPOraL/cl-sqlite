@@ -41,7 +41,10 @@
 
 (defun connect (database-path)
   "Connect to the sqlite database at the given DATABASE-PATH. Returns the SQLITE-HANDLE connected to the database. Use DISCONNECT to disconnect."
-  (make-instance 'sqlite-handle :database-path database-path))
+  (make-instance 'sqlite-handle
+                 :database-path (etypecase database-path
+                                  (string database-path)
+                                  (pathname (namestring database-path)))))
 
 (defun disconnect (handle)
   "Disconnects the given HANDLE from the database. All further operations on the handle are invalid."
