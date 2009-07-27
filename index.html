@@ -190,10 +190,12 @@ Supported types:<br>
 
 <!-- Entry for CONNECT -->
 
-<p><br>[Function]<br><a class=none name='connect'><b>connect</b> <i>database-path</i> =&gt; <i>sqlite-handle</i></a>
+<p><br>[Function]<br><a class=none name='connect'><b>connect</b> <i>database-path</i> <i>&amp;key</i> <i>busy-timeout</i> =&gt; <i>sqlite-handle</i></a>
 <blockquote><br>
 
-Connect to the sqlite database at the given <i>database-path</i> (<i>database-path</i> is a string or a pathname). If <i>database-path</i> equal to <code>":memory:"</code> is given, a new in-memory database is created. Returns the <a href="#sqlite-handle">sqlite-handle</a> connected to the database. Use <a href="disconnect">disconnect</a> to disconnect.
+Connect to the sqlite database at the given <i>database-path</i> (<i>database-path</i> is a string or a pathname). If <i>database-path</i> equal to <code>":memory:"</code> is given, a new in-memory database is created. Returns the <a href="#sqlite-handle">sqlite-handle</a> connected to the database. Use <a href="disconnect">disconnect</a> to disconnect.<br>
+
+Operations will wait for locked databases for up to <i>busy-timeout</i> milliseconds; if <i>busy-timeout</i> is NIL, then operations on locked databases will fail immediately.
 
 </blockquote>
 
@@ -417,10 +419,11 @@ Wraps the <i>body</i> inside the transaction. If <i>body</i> evaluates without e
 
 <!-- Entry for WITH-OPEN-DATABASE -->
 
-<p><br>[Macro]<br><a class=none name='with-open-database'><b>with-open-database</b> (<i>db</i> <i>path</i>) <tt>&amp;body</tt> <i>body</i></i></a>
+<p><br>[Macro]<br><a class=none name='with-open-database'><b>with-open-database</b> (<i>db</i> <i>path</i> <i>&amp;key</i> <i>busy-timeout</i>) <tt>&amp;body</tt> <i>body</i></i></a>
 <blockquote><br>
 
-Executes the <i>body</i> with <i>db</i> being bound to the database handle for database located at <i>path</i>. Database is open before the <i>body</i> is run and it is ensured that database is closed after the evaluation of <i>body</i> finished or interrupted.
+Executes the <i>body</i> with <i>db</i> being bound to the database handle for database located at <i>path</i>. Database is open before the <i>body</i> is run and it is ensured that database is closed after the evaluation of <i>body</i> finished or interrupted.<br>
+See <a href="#connect">CONNECT</a> for meaning of <i>busy-timeout</i> parameter.
 
 </blockquote>
 
