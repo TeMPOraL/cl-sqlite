@@ -1,5 +1,5 @@
 (defpackage :sqlite-tests
-  (:use :cl :sqlite :5am :iter)
+  (:use :cl :sqlite :5am :iter :bordeaux-threads)
   (:export :run-all-tests))
 
 (in-package :sqlite-tests)
@@ -62,3 +62,46 @@
                    collect (list (statement-column-value statement 0) (statement-column-value statement 1) (statement-column-value statement 2))
                    finally (finalize-statement statement))
                 '((1 "joe" 18) (2 "dvk" 22))))))
+
+#+thread-support
+(defparameter *db-file* "/tmp/test.sqlite")
+
+#+thread-support
+(defun ensure-table ()
+  (with-open-database (db *db-file*)
+    (execute-non-query db "CREATE TABLE IF NOT EXISTS FOO (v NUMERIC)")))
+
+#+thread-support
+(test test-concurrent-inserts
+  (when (probe-file *db-file*)
+    (delete-file *db-file*))
+  (ensure-table)
+  (unwind-protect
+       (do-zillions 10 10000)
+    (when (probe-file *db-file*)
+    (delete-file *db-file*))))
+
+#+thread-support
+(defun do-insert (n timeout)
+  "Insert a nonsense value into foo"
+  (ignore-errors
+    (with-open-database (db *db-file* :busy-timeout timeout)
+      (iter (repeat 10000)
+            (execute-non-query db "INSERT INTO FOO (v) VALUES (?)" n)))
+    t))
+
+#+thread-support
+(defun do-zillions (max-n timeout)
+  (iterate (for n from 1 to max-n)
+           (collect 
+               (bt:make-thread (let ((n n))
+                                 (lambda ()
+                                   (do-insert n timeout))))
+             into threads)
+           (finally
+            (iter (for thread in threads)
+                  (for all-ok = t)
+                  (for thread-result = (bt:join-thread thread))
+                  (unless thread-result
+                    (setf all-ok nil))
+                  (finally (is-true all-ok "One of inserter threads encountered a SQLITE_BUSY error"))))))

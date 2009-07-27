@@ -5,6 +5,7 @@
            :sqlite3-open
            :sqlite3-close
            :sqlite3-errmsg
+           :sqlite3-busy-timeout
            :p-sqlite3-stmt
            :sqlite3-prepare
            :sqlite3-finalize
@@ -84,6 +85,10 @@
 
 (defcfun sqlite3-errmsg :string
   (db p-sqlite3))
+
+(defcfun sqlite3-busy-timeout :int
+  (db p-sqlite3)
+  (ms :int))
 
 (defcstruct sqlite3-stmt)
 

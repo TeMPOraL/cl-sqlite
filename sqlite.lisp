@@ -2,6 +2,7 @@
   (:use :cl :iter)
   (:export :sqlite-handle
            :connect
+           :set-busy-timeout
            :disconnect
            :sqlite-statement
            :prepare-statement
@@ -39,12 +40,20 @@
                  error-code database-path))))
   (setf (cache object) (make-instance 'sqlite.cache:mru-cache :cache-size 16 :destructor #'really-finalize-statement)))
 
-(defun connect (database-path)
-  "Connect to the sqlite database at the given DATABASE-PATH. Returns the SQLITE-HANDLE connected to the database. Use DISCONNECT to disconnect."
-  (make-instance 'sqlite-handle
-                 :database-path (etypecase database-path
-                                  (string database-path)
-                                  (pathname (namestring database-path)))))
+(defun connect (database-path &key busy-timeout)
+  "Connect to the sqlite database at the given DATABASE-PATH. Returns the SQLITE-HANDLE connected to the database. Use DISCONNECT to disconnect.
+   Operations will wait for locked databases for up to BUSY-TIMEOUT milliseconds; if BUSY-TIMEOUT is NIL, then operations on locked databases will fail immediately."
+  (let ((db (make-instance 'sqlite-handle
+                           :database-path (etypecase database-path
+                                            (string database-path)
+                                            (pathname (namestring database-path))))))
+    (when busy-timeout
+      (set-busy-timeout db busy-timeout))
+    db))
+
+(defun set-busy-timeout (db milliseconds)
+  "Sets the maximum amount of time to wait for a locked database."
+  (sqlite-ffi:sqlite3-busy-timeout (handle db) milliseconds))
 
 (defun disconnect (handle)
   "Disconnects the given HANDLE from the database. All further operations on the handle are invalid."
@@ -300,8 +309,8 @@ See BIND-PARAMETER for the list of supported parameter types."
              (execute-non-query ,db-var "commit transaction")
              (execute-non-query ,db-var "rollback transaction"))))))
 
-(defmacro with-open-database ((db path) &body body)
-  `(let ((,db (connect ,path)))
+(defmacro with-open-database ((db path &key busy-timeout) &body body)
+  `(let ((,db (connect ,path :busy-timeout ,busy-timeout)))
      (unwind-protect
           (progn ,@body)
        (disconnect ,db))))
