@@ -167,7 +167,7 @@ Returns:
 
 Example:
 
-(execute-non-query db \"insert into users (user_name, real_name) values (?, ?)\" \"joe\" \"Joe the User\")
+\(execute-non-query db \"insert into users (user_name, real_name) values (?, ?)\" \"joe\" \"Joe the User\")
 
 See BIND-PARAMETER for the list of supported parameter types."
   (declare (dynamic-extent parameters))
@@ -185,9 +185,9 @@ See BIND-PARAMETER for the list of supported parameter types."
 
 Example:
 
-(execute-to-list db \"select id, user_name, real_name from users where user_name = ?\" \"joe\")
+\(execute-to-list db \"select id, user_name, real_name from users where user_name = ?\" \"joe\")
 =>
-((1 \"joe\" \"Joe the User\")
+\((1 \"joe\" \"Joe the User\")
  (2 \"joe\" \"Another Joe\")) 
 
 See BIND-PARAMETER for the list of supported parameter types."
@@ -211,9 +211,9 @@ See BIND-PARAMETER for the list of supported parameter types."
   "Executes the query SQL to the database DB with given PARAMETERS. Returns the first row as multiple values.
 
 Example:
-(execute-one-row-m-v db \"select id, user_name, real_name from users where id = ?\" 1)
+\(execute-one-row-m-v db \"select id, user_name, real_name from users where id = ?\" 1)
 =>
-(values 1 \"joe\" \"Joe the User\")
+\(values 1 \"joe\" \"Joe the User\")
 
 See BIND-PARAMETER for the list of supported parameter types."
   (let ((stmt (prepare-statement db sql)))
@@ -269,7 +269,7 @@ Supported types:
   "Executes the query SQL to the database DB with given PARAMETERS. Returns the first column of the first row as single value.
 
 Example:
-(execute-single db \"select user_name from users where id = ?\" 1)
+\(execute-single db \"select user_name from users where id = ?\" 1)
 =>
 \"joe\"
 
