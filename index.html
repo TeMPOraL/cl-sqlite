@@ -444,6 +444,7 @@ This project has a <a href="http://common-lisp.net/mailman/listinfo/cl-sqlite-de
   <li><span style="color:gray">28 Apr 2009</span> <strong>0.1.3</strong> Added support for passing all values of type REAL (including RATIONAL) as query parameter. cl-sqlite is made available as git repository.
   <li><span style="color:gray">10 May 2009</span> <strong>0.1.4</strong> Added test suite (based on <a href="http://common-lisp.net/project/bese/FiveAM.html">FiveAM</a> testing framework); changed foreign library definition to work on Mac OS X (thanks to Patrick Stein) and removed the dependency on sqlite3_next_stmt function that appeared only in sqlite 3.6.0 (making cl-sqlite work with older sqlite versions)
   <li><span style="color:gray">13 June 2009</span> <strong>0.1.5</strong> Allow passing pathnames to <a href="#connect">CONNECT</a> function.
+  <li><span style="color:gray">24 Oct 2009</span> <strong>0.1.6</strong> Add busy-timeout argument to <a href="#connect">CONNECT</a>. Fix library defininitions for running on Microsoft Windows.
 </ul>
 
 <br>&nbsp;<br><h3><a class=none name="ack">Acknowledgements</a></h3>
