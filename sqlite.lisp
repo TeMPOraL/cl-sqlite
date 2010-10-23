@@ -10,6 +10,8 @@
            :step-statement
            :reset-statement
            :statement-column-value
+           :statement-column-names
+           :statement-bind-parameter-names
            :bind-parameter
            :execute-non-query
            :execute-to-list
@@ -72,9 +74,9 @@
    (handle :accessor handle)
    (sql :reader sql :initarg :sql)
    (columns-count :accessor resultset-columns-count)
-   (columns-names :accessor resultset-columns-names)
+   (columns-names :accessor resultset-columns-names :reader statement-column-names)
    (parameters-count :accessor parameters-count)
-   (parameters-names :accessor parameters-names))
+   (parameters-names :accessor parameters-names :reader statement-bind-parameter-names))
   (:documentation "Class that represents the prepared statement."))
 
 (defmethod initialize-instance :after ((object sqlite-statement) &key &allow-other-keys)
