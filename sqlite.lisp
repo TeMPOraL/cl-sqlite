@@ -1,6 +1,12 @@
 (defpackage :sqlite
   (:use :cl :iter)
-  (:export :sqlite-handle
+  (:export :sqlite-error
+           :sqlite-constraint-error
+           :sqlite-error-db-handle
+           :sqlite-error-code
+           :sqlite-error-message
+           :sqlite-error-sql
+           :sqlite-handle
            :connect
            :set-busy-timeout
            :disconnect
@@ -23,6 +29,51 @@
 
 (in-package :sqlite)
 
+(define-condition sqlite-error (simple-error)
+  ((handle     :initform nil :initarg :db-handle
+               :reader sqlite-error-db-handle)
+   (error-code :initform nil :initarg :error-code
+               :reader sqlite-error-code)
+   (error-msg  :initform nil :initarg :error-msg
+               :reader sqlite-error-message)
+   (statement  :initform nil :initarg :statement
+               :reader sqlite-error-statement)
+   (sql        :initform nil :initarg :sql
+               :reader sqlite-error-sql)))
+
+(define-condition sqlite-constraint-error (sqlite-error)
+  ())
+
+(defun sqlite-error (error-code message &key
+                     statement
+                     (db-handle (if statement (db statement)))
+                     (sql-text (if statement (sql statement))))
+  (error (if (eq error-code :constraint)
+             'sqlite-constraint-error
+             'sqlite-error)
+         :format-control (if (listp message) (first message) message)
+         :format-arguments (if (listp message) (rest message))
+         :db-handle db-handle
+         :error-code error-code
+         :error-msg (if db-handle
+                        (sqlite-ffi:sqlite3-errmsg (handle db-handle)))
+         :statement statement
+         :sql sql-text))
+
+(defmethod print-object :after ((obj sqlite-error) stream)
+  (unless *print-escape*
+    (when (or (and (sqlite-error-code obj)
+                   (not (eq (sqlite-error-code obj) :ok)))
+              (sqlite-error-message obj))
+      (format stream "~&Code ~A: ~A."
+              (or (sqlite-error-code obj) :OK)
+              (or (sqlite-error-message obj) "no message")))
+    (when (sqlite-error-db-handle obj)
+      (format stream "~&Database: ~A"
+              (database-path (sqlite-error-db-handle obj))))
+    (when (sqlite-error-sql obj)
+      (format stream "~&SQL: ~A" (sqlite-error-sql obj)))))
+
 ;(declaim (optimize (speed 3) (safety 0) (debug 0)))
 
 (defclass sqlite-handle ()
@@ -38,8 +89,7 @@
       (if (eq error-code :ok)
           (setf (handle object) (cffi:mem-ref ppdb 'sqlite-ffi:p-sqlite3)
                 (database-path object) database-path)
-          (error "Received error code ~A when trying to open sqlite3 database ~A"
-                 error-code database-path))))
+          (sqlite-error error-code (list "Could not open sqlite3 database ~A" database-path)))))
   (setf (cache object) (make-instance 'sqlite.cache:mru-cache :cache-size 16 :destructor #'really-finalize-statement)))
 
 (defun connect (database-path &key busy-timeout)
@@ -66,7 +116,7 @@
         (really-finalize-statement statement))
   (let ((error-code (sqlite-ffi:sqlite3-close (handle handle))))
     (unless (eq error-code :ok)
-      (error "Received error code ~A when trying to close ~A (connected to ~A)" error-code handle (database-path handle)))
+      (sqlite-error error-code "Could not close sqlite3 database." :db-handle handle))
     (slot-makunbound handle 'handle)))
 
 (defclass sqlite-statement ()
@@ -85,9 +135,10 @@
       (cffi:with-foreign-string (sql (sql object))
         (let ((error-code (sqlite-ffi:sqlite3-prepare (handle (db object)) sql -1 p-statement p-tail)))
           (unless (eq error-code :ok)
-            (error "Error when trying to prepare sqlite statement '~A'. Code: ~A, message: ~A" (sql object) error-code (sqlite-ffi:sqlite3-errmsg (handle (db object)))))
+            (sqlite-error error-code "Could not prepare an sqlite statement."
+                          :db-handle (db object) :sql-text (sql object)))
           (unless (zerop (cffi:mem-ref (cffi:mem-ref p-tail '(:pointer :char)) :uchar))
-            (error "SQL string '~A' contains more than one SQL statements" (sql object)))
+            (sqlite-error nil "SQL string contains more than one SQL statement." :sql-text (sql object)))
           (setf (handle object) (cffi:mem-ref p-statement 'sqlite-ffi:p-sqlite3-stmt)
                 (resultset-columns-count object) (sqlite-ffi:sqlite3-column-count (handle object))
                 (resultset-columns-names object) (loop
@@ -123,11 +174,8 @@ Example:
 (defun finalize-statement (statement)
   "Finalizes the statement and signals that associated resources may be released.
 Note: does not immediately release resources because statements are cached."
-  (progn
-    (let ((error-code (sqlite-ffi:sqlite3-reset (handle statement))))
-     (unless (eq error-code :ok)
-       (error "When resetting statement ~A (sql: ~A), error ~A (~A)" statement (sql statement) error-code (sqlite-ffi:sqlite3-errmsg (handle (db statement))))))
-    (sqlite.cache:put-to-cache (cache (db statement)) (sql statement) statement)))
+  (reset-statement statement)
+  (sqlite.cache:put-to-cache (cache (db statement)) (sql statement) statement))
 
 (defun step-statement (statement)
   "Steps to the next row of the resultset of STATEMENT.
@@ -136,13 +184,14 @@ Returns T is successfully advanced to the next row and NIL if there are no more 
     (case error-code
       (:done nil)
       (:row t)
-      (t (error "When stepping statement ~A (sql: ~A), error ~A (~A)" statement (sql statement) error-code (sqlite-ffi:sqlite3-errmsg (handle (db statement))))))))
+      (t
+       (sqlite-error error-code "Error while stepping an sqlite statement." :statement statement)))))
 
 (defun reset-statement (statement)
   "Resets the STATEMENT and prepare it to be called again."
   (let ((error-code (sqlite-ffi:sqlite3-reset (handle statement))))
     (unless (eq error-code :ok)
-      (error "When resetting statment ~A (sql: ~A), error ~A (~A)" statement (sql statement) error-code (sqlite-ffi:sqlite3-errmsg (handle (db statement)))))))
+      (sqlite-error error-code "Error while resetting an sqlite statement." :statement statement))))
 
 (defun statement-column-value (statement column-number)
   "Returns the COLUMN-NUMBER-th column's value of the current row of the STATEMENT. Columns are numbered from zero.
@@ -265,9 +314,15 @@ Supported types:
                                      for i from 0 below (length value)
                                      do (setf (cffi:mem-aref array :unsigned-char i) (aref value i)))
                                   (sqlite-ffi:sqlite3-bind-blob (handle statement) index array (length value) (sqlite-ffi:destructor-transient))))
-                        (t (error "Do not know how to pass value ~A of type ~A to sqlite" value (type-of value))))))
+                        (t
+                         (sqlite-error nil
+                                       (list "Do not know how to pass value ~A of type ~A to sqlite."
+                                             value (type-of value))
+                                       :statement statement)))))
       (unless (eq error-code :ok)
-        (error "When binding parameter ~A to value ~A for statment ~A (sql: ~A), error ~A (~A)" parameter value statement (sql statement) error-code (sqlite-ffi:sqlite3-errmsg (handle (db statement))))))))
+        (sqlite-error error-code
+                      (list "Error when binding parameter ~A to value ~A." parameter value)
+                      :statement statement)))))
 
 (defun execute-single (db sql &rest parameters)
   "Executes the query SQL to the database DB with given PARAMETERS. Returns the first column of the first row as single value.
