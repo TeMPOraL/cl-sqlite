@@ -64,7 +64,8 @@
         (really-finalize-statement statement))
   (let ((error-code (sqlite-ffi:sqlite3-close (handle handle))))
     (unless (eq error-code :ok)
-      (error "Received error code ~A when trying to close ~A (connected to ~A)" error-code handle (database-path handle)))))
+      (error "Received error code ~A when trying to close ~A (connected to ~A)" error-code handle (database-path handle)))
+    (slot-makunbound handle 'handle)))
 
 (defclass sqlite-statement ()
   ((db :reader db :initarg :db)
@@ -114,7 +115,8 @@ Example:
 (defun really-finalize-statement (statement)
   (setf (sqlite-handle-statements (db statement))
         (delete statement (sqlite-handle-statements (db statement))))
-  (sqlite-ffi:sqlite3-finalize (handle statement)))
+  (sqlite-ffi:sqlite3-finalize (handle statement))
+  (slot-makunbound statement 'handle))
 
 (defun finalize-statement (statement)
   "Finalizes the statement and signals that associated resources may be released.
