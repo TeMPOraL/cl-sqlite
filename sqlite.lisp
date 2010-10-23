@@ -298,17 +298,14 @@ See BIND-PARAMETER for the list of supported parameter types."
 (defmacro with-transaction (db &body body)
   "Wraps the BODY inside the transaction."
   (let ((ok (gensym "TRANSACTION-COMMIT-"))
-        (db-var (gensym "DB-"))
-        (result (gensym "RESULT-")))
+        (db-var (gensym "DB-")))
     `(let (,ok
            (,db-var ,db))
        (execute-non-query ,db-var "begin transaction")
        (unwind-protect
-            (progn
-              (let ((,result (progn
-                               ,@body)))
-                (setf ,ok t)
-                ,result))
+            (multiple-value-prog1
+                (progn ,@body)
+              (setf ,ok t))
          (if ,ok
              (execute-non-query ,db-var "commit transaction")
              (execute-non-query ,db-var "rollback transaction"))))))
