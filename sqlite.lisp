@@ -15,6 +15,7 @@
            :finalize-statement
            :step-statement
            :reset-statement
+           :clear-statement-bindings
            :statement-column-value
            :statement-column-names
            :statement-bind-parameter-names
@@ -192,6 +193,13 @@ Returns T is successfully advanced to the next row and NIL if there are no more 
   (let ((error-code (sqlite-ffi:sqlite3-reset (handle statement))))
     (unless (eq error-code :ok)
       (sqlite-error error-code "Error while resetting an sqlite statement." :statement statement))))
+
+(defun clear-statement-bindings (statement)
+  "Sets all binding values to NULL."
+  (let ((error-code (sqlite-ffi:sqlite3-clear-bindings (handle statement))))
+    (unless (eq error-code :ok)
+      (sqlite-error error-code "Error while clearing bindings of an sqlite statement."
+                    :statement statement))))
 
 (defun statement-column-value (statement column-number)
   "Returns the COLUMN-NUMBER-th column's value of the current row of the STATEMENT. Columns are numbered from zero.
