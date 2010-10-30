@@ -66,6 +66,12 @@
       <li><a href="#last-insert-rowid"><code>last-insert-rowid</code></a>
       <li><a href="#prepare-statement"><code>prepare-statement</code></a>
       <li><a href="#reset-statement"><code>reset-statement</code></a>
+      <li><a href="#sqlite-error"><code>sqlite-error</code></a>
+      <li><a href="#sqlite-constraint-error"><code>sqlite-constraint-error</code></a>
+      <li><a href="#sqlite-error-code"><code>sqlite-error-code</code></a>
+      <li><a href="#sqlite-error-db-handle"><code>sqlite-error-db-handle</code></a>
+      <li><a href="#sqlite-error-message"><code>sqlite-error-message</code></a>
+      <li><a href="#sqlite-error-sql"><code>sqlite-error-sql</code></a>
       <li><a href="#sqlite-handle"><code>sqlite-handle</code></a>
       <li><a href="#sqlite-statement"><code>sqlite-statement</code></a>
       <li><a href="#statement-bind-parameter-names"><code>statement-bind-parameter-names</code></a>
@@ -361,6 +367,65 @@ Resets the <i>statement</i> and prepares it to be called again. Note that bind p
 
 <!-- End of entry for RESET-STATEMENT -->
 
+<!-- Entry for SQLITE-ERROR -->
+
+<p><br>[Condition]<br><a class=none name='sqlite-error'><b>sqlite-error</b></a>
+<blockquote><br>
+
+Error condition used by the library.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR -->
+
+<!-- Entry for SQLITE-CONSTRAINT-ERROR -->
+
+<p><br>[Condition]<br><a class=none name='sqlite-constraint-error'><b>sqlite-constraint-error</b></a>
+<blockquote><br>
+
+A subclass of sqlite-error used to distinguish constraint violation errors.
+</blockquote>
+
+<!-- End of entry for SQLITE-CONSTRAINT-ERROR -->
+
+<!-- Entry for SQLITE-ERROR-CODE -->
+
+<p><br>[Accessor]<br><a class=none name='sqlite-error-code'><b>sqlite-error-code</b> <i>sqlite-error</i> =&gt; <i>keyword or null</i></a>
+<blockquote><br>
+
+Returns the SQLite error code represeting the error.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR-CODE -->
+
+<!-- Entry for SQLITE-ERROR-DB-HANDLE -->
+
+<p><br>[Accessor]<br><a class=none name='sqlite-error-db-handle'><b>sqlite-error-db-handle</b> <i>sqlite-error</i> =&gt; <i>sqlite-handle or null</i></a>
+<blockquote><br>
+
+Returns the SQLite database connection that caused the error.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR-DB-HANDLE -->
+
+<!-- Entry for SQLITE-ERROR-MESSAGE -->
+
+<p><br>[Accessor]<br><a class=none name='sqlite-error-message'><b>sqlite-error-message</b> <i>sqlite-error</i> =&gt; <i>string or null</i></a>
+<blockquote><br>
+
+Returns the SQLite error message corresponding to the error code.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR-MESSAGE -->
+
+<!-- Entry for SQLITE-ERROR-SQL -->
+
+<p><br>[Accessor]<br><a class=none name='sqlite-error-sql'><b>sqlite-error-sql</b> <i>sqlite-error</i> =&gt; <i>string or null</i></a>
+<blockquote><br>
+
+Returns the SQL statement source string that caused the error.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR-SQL -->
 
 <!-- Entry for SQLITE-HANDLE -->
 
