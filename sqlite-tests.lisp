@@ -29,7 +29,7 @@
 
 (test create-table-insert-and-error
   (with-inserted-data (db)
-    (signals error
+    (signals sqlite-constraint-error
       (execute-non-query db "insert into users (user_name, age) values (?, ?)" nil nil))))
 
 (test test-select-single
@@ -55,13 +55,26 @@
 
 (test test-loop-with-prepared-statement
   (with-inserted-data (db)
-    (is (equalp (loop
-                   with statement = (prepare-statement db "select id, user_name, age from users where age < ?")
-                   initially (bind-parameter statement 1 25)
-                   while (step-statement statement)
-                   collect (list (statement-column-value statement 0) (statement-column-value statement 1) (statement-column-value statement 2))
-                   finally (finalize-statement statement))
-                '((1 "joe" 18) (2 "dvk" 22))))))
+    (let ((statement
+           (prepare-statement db "select id, user_name, age from users where age < $x")))
+      (unwind-protect
+           (progn
+             (is (equalp (statement-column-names statement)
+                         '("id" "user_name" "age")))
+             (is (equalp (statement-bind-parameter-names statement)
+                         '("$x")))
+             (bind-parameter statement 1 25)
+             (flet ((fetch-all ()
+                      (loop while (step-statement statement)
+                         collect (list (statement-column-value statement 0)
+                                       (statement-column-value statement 1)
+                                       (statement-column-value statement 2))
+                         finally (reset-statement statement))))
+               (is (equalp (fetch-all) '((1 "joe" 18) (2 "dvk" 22))))
+               (is (equalp (fetch-all) '((1 "joe" 18) (2 "dvk" 22))))
+               (clear-statement-bindings statement)
+               (is (equalp (fetch-all) '()))))
+        (finalize-statement statement)))))
 
 #+thread-support
 (defparameter *db-file* "/tmp/test.sqlite")
