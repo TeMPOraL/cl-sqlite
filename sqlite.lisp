@@ -56,7 +56,7 @@
          :format-arguments (if (listp message) (rest message))
          :db-handle db-handle
          :error-code error-code
-         :error-msg (if db-handle
+         :error-msg (if (and db-handle error-code)
                         (sqlite-ffi:sqlite3-errmsg (handle db-handle)))
          :statement statement
          :sql sql-text))
@@ -161,7 +161,10 @@ SQL may have some positional (not named) parameters specified with question mark
 Example:
 
  select name from users where id = ?"
-  (or (sqlite.cache:get-from-cache (cache db) sql)
+  (or (let ((statement (sqlite.cache:get-from-cache (cache db) sql)))
+        (when statement
+          (clear-statement-bindings statement))
+        statement)
       (let ((statement (make-instance 'sqlite-statement :db db :sql sql)))
         (push statement (sqlite-handle-statements db))
         statement)))
