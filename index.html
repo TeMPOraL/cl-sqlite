@@ -55,6 +55,7 @@
   <li><a href="#dictionary">The SQLITE dictionary</a>
     <ol>
       <li><a href="#bind-parameter"><code>bind-parameter</code></a>
+      <li><a href="#clear-statement-bindings"><code>clear-statement-bindings</code></a>
       <li><a href="#connect"><code>connect</code></a>
       <li><a href="#disconnect"><code>disconnect</code></a>
       <li><a href="#execute-non-query"><code>execute-non-query</code></a>
@@ -67,6 +68,8 @@
       <li><a href="#reset-statement"><code>reset-statement</code></a>
       <li><a href="#sqlite-handle"><code>sqlite-handle</code></a>
       <li><a href="#sqlite-statement"><code>sqlite-statement</code></a>
+      <li><a href="#statement-bind-parameter-names"><code>statement-bind-parameter-names</code></a>
+      <li><a href="#statement-column-names"><code>statement-column-names</code></a>
       <li><a href="#statement-column-value"><code>statement-column-value</code></a>
       <li><a href="#step-statement"><code>step-statement</code></a>
       <li><a href="#with-transaction"><code>with-transaction</code></a>
@@ -187,6 +190,16 @@ Supported types:<br>
 
 <!-- End of entry for BIND-PARAMETER -->
 
+<!-- Entry for CLEAR-STATEMENT-BINDINGS -->
+
+<p><br>[Function]<br><a class=none name='clear-statement-bindings'><b>clear-statement-bindings</b> <i>statement</i></a>
+<blockquote><br>
+
+Binds all parameters of the statement to NULL.
+
+</blockquote>
+
+<!-- End of entry for CLEAR-STATEMENT-BINDINGS -->
 
 <!-- Entry for CONNECT -->
 
@@ -342,7 +355,7 @@ Example:<br>
 <p><br>[Function]<br><a class=none name='reset-statement'><b>reset-statement</b> <i>statement</i></a>
 <blockquote><br>
 
-Resets the <i>statement</i> and prepare it to be called again.
+Resets the <i>statement</i> and prepares it to be called again. Note that bind parameter values are not cleared; use <a href="#clear-statement-bindings">clear-statement-bindings</a> for that.
 
 </blockquote>
 
@@ -372,6 +385,25 @@ Class that represents the prepared statement.
 
 <!-- End of entry for SQLITE-STATEMENT -->
 
+<!-- Entry for STATEMENT-BIND-PARAMETER-NAMES -->
+
+<p><br>[Accessor]<br><a class=none name='statement-bind-parameter-names'><b>statement-bind-parameter-names</b> <i>statement</i> =&gt; <i>list of strings</i></a>
+<blockquote><br>
+
+Returns the names of the bind parameters of the prepared statement. If a parameter does not have a name, the corresponding list item is NIL.
+</blockquote>
+
+<!-- End of entry for STATEMENT-BIND-PARAMETER-NAMES -->
+
+<!-- Entry for STATEMENT-COLUMN-NAMES -->
+
+<p><br>[Accessor]<br><a class=none name='statement-column-names'><b>statement-column-names</b> <i>statement</i> =&gt; <i>list of strings</i></a>
+<blockquote><br>
+
+Returns the names of columns in the result set of the prepared statement.
+</blockquote>
+
+<!-- End of entry for STATEMENT-COLUMN-NAMES -->
 
 <!-- Entry for STATEMENT-COLUMN-VALUE -->
 
