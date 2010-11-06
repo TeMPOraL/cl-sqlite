@@ -32,14 +32,29 @@
     (signals sqlite-constraint-error
       (execute-non-query db "insert into users (user_name, age) values (?, ?)" nil nil))))
 
+(test create-table-insert-and-error/named
+  (with-inserted-data (db)
+    (signals sqlite-constraint-error
+      (execute-non-query/named db "insert into users (user_name, age) values (:name, :age)" ":name" nil ":age" nil))))
+
 (test test-select-single
   (with-inserted-data (db)
     (is (= (execute-single db "select id from users where user_name = ?" "dvk")
            2))))
 
+(test test-select-single/named
+  (with-inserted-data (db)
+    (is (= (execute-single/named db "select id from users where user_name = :name" ":name" "dvk")
+           2))))
+
 (test test-select-m-v
   (with-inserted-data (db)
     (is (equalp (multiple-value-list (execute-one-row-m-v db "select id, user_name, age from users where user_name = ?" "joe"))
+                (list 1 "joe" 18)))))
+
+(test test-select-m-v/named
+  (with-inserted-data (db)
+    (is (equalp (multiple-value-list (execute-one-row-m-v/named db "select id, user_name, age from users where user_name = :name" ":name" "joe"))
                 (list 1 "joe" 18)))))
 
 (test test-select-list
@@ -53,7 +68,23 @@
                       (collect (list id user-name age)))
                 '((1 "joe" 18) (2 "dvk" 22))))))
 
+(test test-iterate/named
+  (with-inserted-data (db)
+    (is (equalp (iter (for (id user-name age) in-sqlite-query/named "select id, user_name, age from users where age < :age" on-database db with-parameters (":age" 25))
+                      (collect (list id user-name age)))
+                '((1 "joe" 18) (2 "dvk" 22))))))
+
 (test test-loop-with-prepared-statement
+  (with-inserted-data (db)
+    (is (equalp (loop
+                   with statement = (prepare-statement db "select id, user_name, age from users where age < ?")
+                   initially (bind-parameter statement 1 25)
+                   while (step-statement statement)
+                   collect (list (statement-column-value statement 0) (statement-column-value statement 1) (statement-column-value statement 2))
+                   finally (finalize-statement statement))
+                '((1 "joe" 18) (2 "dvk" 22))))))
+
+(test test-loop-with-prepared-statement/named
   (with-inserted-data (db)
     (let ((statement
            (prepare-statement db "select id, user_name, age from users where age < $x")))
@@ -63,7 +94,7 @@
                          '("id" "user_name" "age")))
              (is (equalp (statement-bind-parameter-names statement)
                          '("$x")))
-             (bind-parameter statement 1 25)
+             (bind-parameter statement "$x" 25)
              (flet ((fetch-all ()
                       (loop while (step-statement statement)
                          collect (list (statement-column-value statement 0)

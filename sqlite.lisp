@@ -23,6 +23,10 @@
            :execute-non-query
            :execute-to-list
            :execute-single
+           :execute-single/named
+           :execute-one-row-m-v/named
+           :execute-to-list/named
+           :execute-non-query/named
            :execute-one-row-m-v
            :last-insert-rowid
            :with-transaction
@@ -226,6 +230,30 @@ Returns:
                   do (setf (aref result i) (cffi:mem-aref blob :unsigned-char i)))
                result)))))
 
+(defmacro with-prepared-statement (statement-var (db sql parameters-var) &body body)
+  (let ((i-var (gensym "I"))
+        (value-var (gensym "VALUE")))
+    `(let ((,statement-var (prepare-statement ,db ,sql)))
+       (unwind-protect
+            (progn
+              (iter (for ,i-var from 1)
+                    (declare (type fixnum ,i-var))
+                    (for ,value-var in ,parameters-var)
+                    (bind-parameter ,statement-var ,i-var ,value-var))
+              ,@body)
+         (finalize-statement ,statement-var)))))
+
+(defmacro with-prepared-statement/named (statement-var (db sql parameters-var) &body body)
+  (let ((name-var (gensym "NAME"))
+        (value-var (gensym "VALUE")))
+    `(let ((,statement-var (prepare-statement ,db ,sql)))
+       (unwind-protect
+            (progn
+              (iter (for (,name-var ,value-var) on ,parameters-var by #'cddr)
+                    (bind-parameter ,statement-var (string ,name-var) ,value-var))
+              ,@body)
+         (finalize-statement ,statement-var)))))
+
 (defun execute-non-query (db sql &rest parameters)
   "Executes the query SQL to the database DB with given PARAMETERS. Returns nothing.
 
@@ -235,14 +263,22 @@ Example:
 
 See BIND-PARAMETER for the list of supported parameter types."
   (declare (dynamic-extent parameters))
-  (let ((stmt (prepare-statement db sql)))
-    (iter (for i from 1)
-          (declare (type fixnum i))
-          (for value in parameters)
-          (bind-parameter stmt i value))
-    (step-statement stmt)
-    (finalize-statement stmt)
-    (values)))
+  (with-prepared-statement statement (db sql parameters)
+    (step-statement statement)))
+
+(defun execute-non-query/named (db sql &rest parameters)
+  "Executes the query SQL to the database DB with given PARAMETERS. Returns nothing.
+
+PARAMETERS is a list of alternating parameter names and values.
+
+Example:
+
+\(execute-non-query db \"insert into users (user_name, real_name) values (:name, :real_name)\" \":name\" \"joe\" \":real_name\" \"Joe the User\")
+
+See BIND-PARAMETER for the list of supported parameter types."
+  (declare (dynamic-extent parameters))
+  (with-prepared-statement/named statement (db sql parameters)
+    (step-statement statement)))
 
 (defun execute-to-list (db sql &rest parameters)
   "Executes the query SQL to the database DB with given PARAMETERS. Returns the results as list of lists.
@@ -256,20 +292,39 @@ Example:
 
 See BIND-PARAMETER for the list of supported parameter types."
   (declare (dynamic-extent parameters))
-  (let ((stmt (prepare-statement db sql))
-        result)
-    (iter (for i from 1)
-          (declare (type fixnum i))
-          (for value in parameters)
-          (bind-parameter stmt i value))
-    (loop (if (step-statement stmt)
-              (push (iter (for i from 0 below (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))))
-                          (declare (type fixnum i))
-                          (collect (statement-column-value stmt i)))
-                    result)
-              (return)))
-    (finalize-statement stmt)
-    (nreverse result)))
+  (with-prepared-statement stmt (db sql parameters)
+    (let (result)
+      (loop (if (step-statement stmt)
+                (push (iter (for i from 0 below (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))))
+                            (declare (type fixnum i))
+                            (collect (statement-column-value stmt i)))
+                      result)
+                (return)))
+      (nreverse result))))
+
+(defun execute-to-list/named (db sql &rest parameters)
+  "Executes the query SQL to the database DB with given PARAMETERS. Returns the results as list of lists.
+
+PARAMETERS is a list of alternating parameters names and values.
+
+Example:
+
+\(execute-to-list db \"select id, user_name, real_name from users where user_name = :user_name\" \":user_name\" \"joe\")
+=>
+\((1 \"joe\" \"Joe the User\")
+ (2 \"joe\" \"Another Joe\")) 
+
+See BIND-PARAMETER for the list of supported parameter types."
+  (declare (dynamic-extent parameters))
+  (with-prepared-statement/named stmt (db sql parameters)
+    (let (result)
+      (loop (if (step-statement stmt)
+                (push (iter (for i from 0 below (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))))
+                            (declare (type fixnum i))
+                            (collect (statement-column-value stmt i)))
+                      result)
+                (return)))
+      (nreverse result))))
 
 (defun execute-one-row-m-v (db sql &rest parameters)
   "Executes the query SQL to the database DB with given PARAMETERS. Returns the first row as multiple values.
@@ -280,28 +335,41 @@ Example:
 \(values 1 \"joe\" \"Joe the User\")
 
 See BIND-PARAMETER for the list of supported parameter types."
-  (let ((stmt (prepare-statement db sql)))
-    (unwind-protect
-         (progn
-           (iter (for i from 1)
-                 (declare (type fixnum i))
-                 (for value in parameters)
-                 (bind-parameter stmt i value))
-           (if (step-statement stmt)
-               (return-from execute-one-row-m-v
-                 (values-list (iter (for i from 0 below (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))))
-                                    (declare (type fixnum i))
-                                    (collect (statement-column-value stmt i)))))
-               (return-from execute-one-row-m-v
-                 (values-list (loop repeat (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))) collect nil)))))
-      (finalize-statement stmt))))
+  (with-prepared-statement stmt (db sql parameters)
+    (if (step-statement stmt)
+        (return-from execute-one-row-m-v
+          (values-list (iter (for i from 0 below (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))))
+                             (declare (type fixnum i))
+                             (collect (statement-column-value stmt i)))))
+        (return-from execute-one-row-m-v
+          (values-list (loop repeat (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))) collect nil))))))
+
+(defun execute-one-row-m-v/named (db sql &rest parameters)
+  "Executes the query SQL to the database DB with given PARAMETERS. Returns the first row as multiple values.
+
+PARAMETERS is a list of alternating parameters names and values.
+
+Example:
+\(execute-one-row-m-v db \"select id, user_name, real_name from users where id = :id\" \":id\" 1)
+=>
+\(values 1 \"joe\" \"Joe the User\")
+
+See BIND-PARAMETER for the list of supported parameter types."
+  (with-prepared-statement/named stmt (db sql parameters)
+    (if (step-statement stmt)
+        (return-from execute-one-row-m-v/named
+          (values-list (iter (for i from 0 below (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))))
+                             (declare (type fixnum i))
+                             (collect (statement-column-value stmt i)))))
+        (return-from execute-one-row-m-v/named
+          (values-list (loop repeat (the fixnum (sqlite-ffi:sqlite3-column-count (handle stmt))) collect nil))))))
 
 (defun statement-parameter-index (statement parameter-name)
   (sqlite-ffi:sqlite3-bind-parameter-index (handle statement) parameter-name))
 
 (defun bind-parameter (statement parameter value)
   "Sets the PARAMETER-th parameter in STATEMENT to the VALUE.
-Parameters are numbered from one.
+PARAMETER may be parameter index (starting from 1) or parameters name.
 Supported types:
  * NULL. Passed as NULL
  * INTEGER. Passed as an 64-bit integer
@@ -345,17 +413,27 @@ Example:
 
 See BIND-PARAMETER for the list of supported parameter types."
   (declare (dynamic-extent parameters))
-  (let ((stmt (prepare-statement db sql)))
-    (unwind-protect
-         (progn
-           (iter (for i from 1)
-                 (declare (type fixnum i))
-                 (for value in parameters)
-                 (bind-parameter stmt i value))
-           (if (step-statement stmt)
-               (statement-column-value stmt 0)
-               nil))
-      (finalize-statement stmt))))
+  (with-prepared-statement stmt (db sql parameters)
+    (if (step-statement stmt)
+        (statement-column-value stmt 0)
+        nil)))
+
+(defun execute-single/named (db sql &rest parameters)
+  "Executes the query SQL to the database DB with given PARAMETERS. Returns the first column of the first row as single value.
+
+PARAMETERS is a list of alternating parameters names and values.
+
+Example:
+\(execute-single db \"select user_name from users where id = :id\" \":id\" 1)
+=>
+\"joe\"
+
+See BIND-PARAMETER for the list of supported parameter types."
+  (declare (dynamic-extent parameters))
+  (with-prepared-statement/named stmt (db sql parameters)
+    (if (step-statement stmt)
+        (statement-column-value stmt 0)
+        nil)))
 
 (defun last-insert-rowid (db)
   "Returns the auto-generated ID of the last inserted row on the database connection DB."
@@ -398,6 +476,23 @@ See BIND-PARAMETER for the list of supported parameter types."
                                   (values ,@(iter (for i from 0 below (if (symbolp vars) 1 (length vars)))
                                                   (collect `(statement-column-value ,statement ,i))))
                                   (terminate)))))))
+
+(defmacro-driver (FOR vars IN-SQLITE-QUERY/NAMED query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+  (let ((statement (gensym "STATEMENT-"))
+        (kwd (if generate 'generate 'for)))
+    `(progn (with ,statement = (prepare-statement ,db ,query-expression))
+            (finally-protected (when ,statement (finalize-statement ,statement)))
+            ,@(when parameters
+                    (list `(initially ,@(iter (for (name value) on parameters by #'cddr)
+                                              (collect `(sqlite:bind-parameter ,statement ,name ,value))))))
+            (,kwd ,(if (symbolp vars)
+                       `(values ,vars)
+                       `(values ,@vars))
+                  next (progn (if (step-statement ,statement)
+                                  (values ,@(iter (for i from 0 below (if (symbolp vars) 1 (length vars)))
+                                                  (collect `(statement-column-value ,statement ,i))))
+                                  (terminate)))))))
+
 
 (defmacro-driver (FOR vars ON-SQLITE-STATEMENT statement)
   (let ((statement-var (gensym "STATEMENT-"))
