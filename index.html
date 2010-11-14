@@ -59,9 +59,13 @@
       <li><a href="#connect"><code>connect</code></a>
       <li><a href="#disconnect"><code>disconnect</code></a>
       <li><a href="#execute-non-query"><code>execute-non-query</code></a>
+      <li><a href="#execute-non-query/named"><code>execute-non-query/named</code></a>
       <li><a href="#execute-one-row-m-v"><code>execute-one-row-m-v</code></a>
+      <li><a href="#execute-one-row-m-v/named"><code>execute-one-row-m-v/named</code></a>
       <li><a href="#execute-single"><code>execute-single</code></a>
+      <li><a href="#execute-singled/named"><code>execute-single/named</code></a>
       <li><a href="#execute-to-list"><code>execute-to-list</code></a>
+      <li><a href="#execute-to-list/named"><code>execute-to-list/named</code></a>
       <li><a href="#finalize-statement"><code>finalize-statement</code></a>
       <li><a href="#last-insert-rowid"><code>last-insert-rowid</code></a>
       <li><a href="#prepare-statement"><code>prepare-statement</code></a>
@@ -108,7 +112,8 @@
 <span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"create table users (id integer primary key, user_name text not null, age integer null)"</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-style: italic;color: #808080;">;;Create the table</span>
 
 <span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (?, ?)"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"joe"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">18</span><span style="font-weight: bold;color: #0000ff;">)</span>
-<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (?, ?)"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"dvk"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">22</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query/named *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (:user_name, :user_age)"</span><span style="color: #000000;"> </span>
+<span style="color: #000000">                         </span><span style="color: #dd0000;">":user_name"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"dvk"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">":user_age"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">22</span><span style="font-weight: bold;color: #0000ff;">)</span>
 <span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (?, ?)"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"qwe"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">30</span><span style="font-weight: bold;color: #0000ff;">)</span>
 <span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (?, ?)"</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #000000;">nil</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #000000;">nil</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-style: italic;color: #808080;">;; ERROR: constraint failed</span>
 
@@ -125,10 +130,25 @@
 <span style="color: #000000;">      </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">collect </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">list</span><span style="color: #000000;"> id user-name age</span><span style="font-weight: bold;color: #0000ff;">)))</span>
 <span style="font-style: italic;color: #808080;">;; =&gt; ((1 "joe" 18) (2 "dvk" 22))</span>
 
+<span style="font-style: italic;color: #808080;">;; Use iterate with named parameters</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">iter </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">for </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">id user-name age</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> in-sqlite-query/named </span><span style="color: #dd0000;">"select id, user_name, age from users where age &lt; :age"</span>
+<span style="color: #000000;">      on-database *db* with-parameters </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #dd0000;">":age"</span><span style="color: #000000"> </span><span style="color: #0000ff;">25</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="color: #000000;">      </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">collect </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">list</span><span style="color: #000000;"> id user-name age</span><span style="font-weight: bold;color: #0000ff;">)))</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; ((1 "joe" 18) (2 "dvk" 22))</span>
+
 <span style="font-style: italic;color: #808080;">;; Use prepared statements directly</span>
 <span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">loop</span>
 <span style="color: #000000;">   with statement </span><span style="font-weight: bold;color: #d22811;">=</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">prepare-statement *db* </span><span style="color: #dd0000;">"select id, user_name, age from users where age &lt; ?"</span><span style="font-weight: bold;color: #0000ff;">)</span>
 <span style="color: #000000;">   initially </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">bind-parameter statement </span><span style="color: #0000ff;">1</span><span style="color: #000000;"> </span><span style="color: #0000ff;">25</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   while </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">step-statement statement</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   collect </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">list</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">0</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">1</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">2</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="color: #000000;">   finally </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">finalize-statement statement</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; ((1 "joe" 18) (2 "dvk" 22))</span>
+
+<span style="font-style: italic;color: #808080;">;; Use prepared statements with named parameters</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">loop</span>
+<span style="color: #000000;">   with statement </span><span style="font-weight: bold;color: #d22811;">=</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">prepare-statement *db* </span><span style="color: #dd0000;">"select id, user_name, age from users where age &lt; :age"</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   initially </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">bind-parameter statement </span><span style="color: #ff0000;">":age"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">25</span><span style="font-weight: bold;color: #0000ff;">)</span>
 <span style="color: #000000;">   while </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">step-statement statement</span><span style="font-weight: bold;color: #0000ff;">)</span>
 <span style="color: #000000;">   collect </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">list</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">0</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">1</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">2</span><span style="font-weight: bold;color: #0000ff;">))</span>
 <span style="color: #000000;">   finally </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">finalize-statement statement</span><span style="font-weight: bold;color: #0000ff;">))</span>
@@ -147,10 +167,10 @@
 
 <p>To make queries to the database the following functions are provided:</p>
 <ul>
-<li><a href="#execute-non-query">execute-non-query</a> executes the query and returns nothing</li>
-<li><a href="#execute-single">execute-single</a> returns the first column of the first row of the result</li>
-<li><a href="#execute-one-row-m-v">execute-one-row-m-v</a> returns the first row of the result as multiple values</li>
-<li><a href="#execute-to-list">execute-to-list</a> returns all rows as the list of lists</li>
+<li><a href="#execute-non-query">execute-non-query</a> (<a href="#execute-non-query/named">execute-non-query/named</a>) executes the query and returns nothing</li>
+<li><a href="#execute-single">execute-single</a> (<a href="#execute-single/named">execute-single/named</a>) returns the first column of the first row of the result</li>
+<li><a href="#execute-one-row-m-v">execute-one-row-m-v</a> (<a href="#execute-one-row-m-v/named">execute-one-row-m-v/named</a>) returns the first row of the result as multiple values</li>
+<li><a href="#execute-to-list">execute-to-list</a> (<a href="#execute-to-list/named">execute-to-list/named</a>) returns all rows as the list of lists</li>
 </ul>
 
 <p>Macro <a href="#with-transaction">with-transaction</a> is used to execute code within transaction.</p>
@@ -181,8 +201,8 @@ This clause will bind <i>vars</i> (a list of variables) to the values of the col
 <p><br>[Function]<br><a class=none name='bind-parameter'><b>bind-parameter</b> <i>statement parameter value</i></a>
 <blockquote><br>
 
-Sets the <i>parameter</i>-th parameter in <i>statement</i> to the <i>value</i>.<br>
-Parameters are numbered from one.<br>
+Sets the <i>parameter</i> in <i>statement</i> to the <i>value</i>.<br>
+<i>parameter</i> is an index (parameters are numbered from one) or the name of a parameter.<br>
 Supported types:<br>
 <ul>
 <li>Null. Passed as NULL
@@ -251,6 +271,25 @@ See <a href="#bind-parameter">bind-parameter</a> for the list of supported param
 <!-- End of entry for EXECUTE-NON-QUERY -->
 
 
+<!-- Entry for EXECUTE-NON-QUERY/NAMED -->
+
+<p><br>[Function]<br><a class=none name='execute-non-query/named'><b>execute-non-query/named</b> <i>db sql <tt>&amp;rest</tt> parameters</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns nothing. Parameters are alternating names and values.<br>
+
+Example:<br>
+
+<pre>(execute-non-query/named db &quot;insert into users (user_name, real_name) values (:user_name, :real_name)&quot;
+                         &quot;:user_name&quot; &quot;joe&quot; &quot;:real_name&quot; &quot;Joe the User&quot;)</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-NON-QUERY -->
+
+
 <!-- Entry for EXECUTE-ONE-ROW-M-V -->
 
 <p><br>[Function]<br><a class=none name='execute-one-row-m-v'><b>execute-one-row-m-v</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; (values <i>result*</i>)</a>
@@ -260,6 +299,25 @@ Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters
 
 Example:<br>
 <pre>(execute-one-row-m-v db &quot;select id, user_name, real_name from users where id = ?&quot; 1)
+=&gt;
+(values 1 &quot;joe&quot; &quot;Joe the User&quot;)</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-ONE-ROW-M-V -->
+
+
+<!-- Entry for EXECUTE-ONE-ROW-M-V/NAMED -->
+
+<p><br>[Function]<br><a class=none name='execute-one-row-m-v'><b>execute-one-row-m-v/named</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; (values <i>result*</i>)</a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the first row as multiple values. Parameters are alternating names and values.<br>
+
+Example:<br>
+<pre>(execute-one-row-m-v/named db &quot;select id, user_name, real_name from users where id = :id&quot; &quot;:id&quot; 1)
 =&gt;
 (values 1 &quot;joe&quot; &quot;Joe the User&quot;)</pre>
 
@@ -289,6 +347,25 @@ See <a href="#bind-parameter">bind-parameter</a> for the list of supported param
 <!-- End of entry for EXECUTE-SINGLE -->
 
 
+<!-- Entry for EXECUTE-SINGLE/NAMED -->
+
+<p><br>[Function]<br><a class=none name='execute-single/named'><b>execute-single/named</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; <i>result</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the first column of the first row as single value. Parameters are alternating names and values.<br>
+
+Example:<br>
+<pre>(execute-single/named db &quot;select user_name from users where id = :id&quot; &quot;:id&quot; 1)
+=&gt;
+&quot;joe&quot;</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-SINGLE -->
+
+
 <!-- Entry for EXECUTE-TO-LIST -->
 
 <p><br>[Function]<br><a class=none name='execute-to-list'><b>execute-to-list</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; <i>results</i></a>
@@ -299,6 +376,27 @@ Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters
 Example:<br>
 
 <pre>(execute-to-list db &quot;select id, user_name, real_name from users where user_name = ?&quot; &quot;joe&quot;)
+=&gt;
+((1 &quot;joe&quot; &quot;Joe the User&quot;)
+ (2 &quot;joe&quot; &quot;Another Joe&quot;)) </pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-TO-LIST -->
+
+
+<!-- Entry for EXECUTE-TO-LIST -->
+
+<p><br>[Function]<br><a class=none name='execute-to-list/named'><b>execute-to-list/named</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; <i>results</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the results as list of lists. Parameters are alternating names and values.<br>
+
+Example:<br>
+
+<pre>(execute-to-list db &quot;select id, user_name, real_name from users where user_name = :name&quot; &quot;:name&quot; &quot;joe&quot;)
 =&gt;
 ((1 &quot;joe&quot; &quot;Joe the User&quot;)
  (2 &quot;joe&quot; &quot;Another Joe&quot;)) </pre>
