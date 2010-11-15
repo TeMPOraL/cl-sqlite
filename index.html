@@ -40,7 +40,8 @@
 <p style='color: red;'>This documentation describes only the CL-SQLITE package, not the SQLite database itself. SQLite documentation is available at <a href="http://sqlite.org/docs.html">http://sqlite.org/docs.html</a></p>
 
 
-<p>CL-SQLITE together with this documentation can be downloaded from <a href="http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.1.6.tar.gz">http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.1.6.tar.gz</a>.</p>
+<p>CL-SQLITE together with this documentation can be downloaded from <a 
+href="http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-2.tar.gz">http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.2.tar.gz</a>.</p>
 
 <p>CL-SQLITE source code is available in Git repository at <code>git://repo.or.cz/cl-sqlite.git</code> (<a href="http://repo.or.cz/w/cl-sqlite.git">gitweb</a>) and at <code>git://github.com/dmitryvk/cl-sqlite.git</code> (<a href="http://github.com/dmitryvk/cl-sqlite/tree/master">gitweb</a>).</p>
 
@@ -92,7 +93,9 @@
 
 <br>&nbsp;<br><h3><a class=none name="installation">Installation</a></h3>
 
-<p>The package can be downloaded from <a href="http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.1.6.tar.gz">http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.1.6.tar.gz</a>. CL-SQLITE package has the following dependencies:</p>
+<p>The package can be downloaded from <a 
+href="http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.2.tar.gz">http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.2.tar.gz</a>. 
+CL-SQLITE package has the following dependencies:</p>
 <ul>
   <li><a href="http://common-lisp.net/project/cffi/">CFFI</a></li>
   <li><a href="http://common-lisp.net/project/iterate/">iterate</a></li>
@@ -100,6 +103,11 @@
 
 <p>SQLITE has a system definition for <a href="http://www.cliki.net/asdf">ASDF</a>. Compile and load it in the usual way.</p>
 
+<p>This package does not include SQLite library. It should be installed 
+and loadable with regular FFI mechanisms. On Linux and Mac OS X SQLite 
+is probably already installed (if it's not installed, use native package 
+manager to install it). On Windows PATH environment variable should 
+contain path to sqlite3.dll.</p>
 
 <br>&nbsp;<br><h3><a class=none name="example">Example</a></h3>
 
