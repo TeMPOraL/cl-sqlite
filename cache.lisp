@@ -53,6 +53,7 @@
 
 (defun purge-cache (cache)
   (iter (for (id items) in-hashtable (objects-table cache))
+        (declare (ignorable id))
         (when items
           (iter (for item in-vector (the vector items))
                 (funcall (destructor cache) item)))))
