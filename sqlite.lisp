@@ -53,7 +53,7 @@
                      statement
                      (db-handle (if statement (db statement)))
                      (sql-text (if statement (sql statement))))
-  (error (if (eq error-code :constraint)
+  (error (if (eq error-code :CONSTRAINT)
              'sqlite-constraint-error
              'sqlite-error)
          :format-control (if (listp message) (first message) message)
@@ -91,7 +91,7 @@
 (defmethod initialize-instance :after ((object sqlite-handle) &key (database-path ":memory:") &allow-other-keys)
   (cffi:with-foreign-object (ppdb 'sqlite-ffi:p-sqlite3)
     (let ((error-code (sqlite-ffi:sqlite3-open database-path ppdb)))
-      (if (eq error-code :ok)
+      (if (eq error-code :OK)
           (setf (handle object) (cffi:mem-ref ppdb 'sqlite-ffi:p-sqlite3)
                 (database-path object) database-path)
           (sqlite-error error-code (list "Could not open sqlite3 database ~A" database-path)))))
@@ -120,7 +120,7 @@
         (for statement in statements)
         (really-finalize-statement statement))
   (let ((error-code (sqlite-ffi:sqlite3-close (handle handle))))
-    (unless (eq error-code :ok)
+    (unless (eq error-code :OK)
       (sqlite-error error-code "Could not close sqlite3 database." :db-handle handle))
     (slot-makunbound handle 'handle)))
 
@@ -139,7 +139,7 @@
     (cffi:with-foreign-object (p-tail '(:pointer :char))
       (cffi:with-foreign-string (sql (sql object))
         (let ((error-code (sqlite-ffi:sqlite3-prepare (handle (db object)) sql -1 p-statement p-tail)))
-          (unless (eq error-code :ok)
+          (unless (eq error-code :OK)
             (sqlite-error error-code "Could not prepare an sqlite statement."
                           :db-handle (db object) :sql-text (sql object)))
           (unless (zerop (cffi:mem-ref (cffi:mem-ref p-tail '(:pointer :char)) :uchar))
@@ -190,21 +190,21 @@ Note: does not immediately release resources because statements are cached."
 Returns T is successfully advanced to the next row and NIL if there are no more rows."
   (let ((error-code (sqlite-ffi:sqlite3-step (handle statement))))
     (case error-code
-      (:done nil)
-      (:row t)
+      (:DONE nil)
+      (:ROW t)
       (t
        (sqlite-error error-code "Error while stepping an sqlite statement." :statement statement)))))
 
 (defun reset-statement (statement)
   "Resets the STATEMENT and prepare it to be called again."
   (let ((error-code (sqlite-ffi:sqlite3-reset (handle statement))))
-    (unless (eq error-code :ok)
+    (unless (eq error-code :OK)
       (sqlite-error error-code "Error while resetting an sqlite statement." :statement statement))))
 
 (defun clear-statement-bindings (statement)
   "Sets all binding values to NULL."
   (let ((error-code (sqlite-ffi:sqlite3-clear-bindings (handle statement))))
-    (unless (eq error-code :ok)
+    (unless (eq error-code :OK)
       (sqlite-error error-code "Error while clearing bindings of an sqlite statement."
                     :statement statement))))
 
@@ -231,8 +231,8 @@ Returns:
                result)))))
 
 (defmacro with-prepared-statement (statement-var (db sql parameters-var) &body body)
-  (let ((i-var (gensym "I"))
-        (value-var (gensym "VALUE")))
+  (let ((i-var (gensym #-allegro "I" #+allegro "i"))
+        (value-var (gensym #-allegro "VALUE" #+allegro "value")))
     `(let ((,statement-var (prepare-statement ,db ,sql)))
        (unwind-protect
             (progn
@@ -244,8 +244,8 @@ Returns:
          (finalize-statement ,statement-var)))))
 
 (defmacro with-prepared-statement/named (statement-var (db sql parameters-var) &body body)
-  (let ((name-var (gensym "NAME"))
-        (value-var (gensym "VALUE")))
+  (let ((name-var (gensym #-allegro "NAME" #+allegro "name"))
+        (value-var (gensym #-allegro "VALUE" #+allegro "value")))
     `(let ((,statement-var (prepare-statement ,db ,sql)))
        (unwind-protect
             (progn
@@ -398,7 +398,7 @@ Supported types:
                                        (list "Do not know how to pass value ~A of type ~A to sqlite."
                                              value (type-of value))
                                        :statement statement)))))
-      (unless (eq error-code :ok)
+      (unless (eq error-code :OK)
         (sqlite-error error-code
                       (list "Error when binding parameter ~A to value ~A." parameter value)
                       :statement statement)))))
@@ -460,8 +460,9 @@ See BIND-PARAMETER for the list of supported parameter types."
           (progn ,@body)
        (disconnect ,db))))
 
-(defmacro-driver (FOR vars IN-SQLITE-QUERY query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
-  (let ((statement (gensym "STATEMENT-"))
+(defmacro-driver #-allegro (FOR vars IN-SQLITE-QUERY query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+                 #+allegro (for vars in-sqlite-query query-expression on-database db &optional with-parameters parameters)
+  (let ((statement (gensym #-allegro "STATEMENT-" #+allegro "statement-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement = (prepare-statement ,db ,query-expression))
             (finally-protected (when ,statement (finalize-statement ,statement)))
@@ -477,8 +478,9 @@ See BIND-PARAMETER for the list of supported parameter types."
                                                   (collect `(statement-column-value ,statement ,i))))
                                   (terminate)))))))
 
-(defmacro-driver (FOR vars IN-SQLITE-QUERY/NAMED query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
-  (let ((statement (gensym "STATEMENT-"))
+(defmacro-driver #-allegro (FOR vars IN-SQLITE-QUERY/NAMED query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+                 #+allegro (for vars in-sqlite-query/named query-expression on-database db &optional with-parameters parameters)
+  (let ((statement (gensym #-allegro "STATEMENT-" #+allegro "statement-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement = (prepare-statement ,db ,query-expression))
             (finally-protected (when ,statement (finalize-statement ,statement)))
@@ -494,8 +496,9 @@ See BIND-PARAMETER for the list of supported parameter types."
                                   (terminate)))))))
 
 
-(defmacro-driver (FOR vars ON-SQLITE-STATEMENT statement)
-  (let ((statement-var (gensym "STATEMENT-"))
+(defmacro-driver #-allegro (FOR vars ON-SQLITE-STATEMENT statement)
+                 #+allegro (for vars on-sqlite-statement statement)
+  (let ((statement-var (gensym #-allegro "STATEMENT" #+allegro "statement-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement-var = ,statement)
             (,kwd ,(if (symbolp vars)
