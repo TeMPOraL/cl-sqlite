@@ -53,7 +53,7 @@
                      statement
                      (db-handle (if statement (db statement)))
                      (sql-text (if statement (sql statement))))
-  (error (if (eq error-code :CONSTRAINT)
+  (error (if (eq error-code :constraint)
              'sqlite-constraint-error
              'sqlite-error)
          :format-control (if (listp message) (first message) message)
@@ -91,7 +91,7 @@
 (defmethod initialize-instance :after ((object sqlite-handle) &key (database-path ":memory:") &allow-other-keys)
   (cffi:with-foreign-object (ppdb 'sqlite-ffi:p-sqlite3)
     (let ((error-code (sqlite-ffi:sqlite3-open database-path ppdb)))
-      (if (eq error-code :OK)
+      (if (eq error-code :ok)
           (setf (handle object) (cffi:mem-ref ppdb 'sqlite-ffi:p-sqlite3)
                 (database-path object) database-path)
           (sqlite-error error-code (list "Could not open sqlite3 database ~A" database-path)))))
@@ -120,7 +120,7 @@
         (for statement in statements)
         (really-finalize-statement statement))
   (let ((error-code (sqlite-ffi:sqlite3-close (handle handle))))
-    (unless (eq error-code :OK)
+    (unless (eq error-code :ok)
       (sqlite-error error-code "Could not close sqlite3 database." :db-handle handle))
     (slot-makunbound handle 'handle)))
 
@@ -139,7 +139,7 @@
     (cffi:with-foreign-object (p-tail '(:pointer :char))
       (cffi:with-foreign-string (sql (sql object))
         (let ((error-code (sqlite-ffi:sqlite3-prepare (handle (db object)) sql -1 p-statement p-tail)))
-          (unless (eq error-code :OK)
+          (unless (eq error-code :ok)
             (sqlite-error error-code "Could not prepare an sqlite statement."
                           :db-handle (db object) :sql-text (sql object)))
           (unless (zerop (cffi:mem-ref (cffi:mem-ref p-tail '(:pointer :char)) :uchar))
@@ -190,21 +190,21 @@ Note: does not immediately release resources because statements are cached."
 Returns T is successfully advanced to the next row and NIL if there are no more rows."
   (let ((error-code (sqlite-ffi:sqlite3-step (handle statement))))
     (case error-code
-      (:DONE nil)
-      (:ROW t)
+      (:done nil)
+      (:row t)
       (t
        (sqlite-error error-code "Error while stepping an sqlite statement." :statement statement)))))
 
 (defun reset-statement (statement)
   "Resets the STATEMENT and prepare it to be called again."
   (let ((error-code (sqlite-ffi:sqlite3-reset (handle statement))))
-    (unless (eq error-code :OK)
+    (unless (eq error-code :ok)
       (sqlite-error error-code "Error while resetting an sqlite statement." :statement statement))))
 
 (defun clear-statement-bindings (statement)
   "Sets all binding values to NULL."
   (let ((error-code (sqlite-ffi:sqlite3-clear-bindings (handle statement))))
-    (unless (eq error-code :OK)
+    (unless (eq error-code :ok)
       (sqlite-error error-code "Error while clearing bindings of an sqlite statement."
                     :statement statement))))
 
@@ -398,7 +398,7 @@ Supported types:
                                        (list "Do not know how to pass value ~A of type ~A to sqlite."
                                              value (type-of value))
                                        :statement statement)))))
-      (unless (eq error-code :OK)
+      (unless (eq error-code :ok)
         (sqlite-error error-code
                       (list "Error when binding parameter ~A to value ~A." parameter value)
                       :statement statement)))))

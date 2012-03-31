@@ -10,4 +10,4 @@
   :in-order-to ((test-op (load-op sqlite-tests))))
 
 (defmethod perform ((o asdf:test-op) (c (eql (find-system :sqlite))))
-  (funcall (intern "run-all-tests" :sqlite-tests)))
+  (funcall (intern "RUN-ALL-TESTS" :sqlite-tests)))
