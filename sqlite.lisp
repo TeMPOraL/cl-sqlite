@@ -231,8 +231,8 @@ Returns:
                result)))))
 
 (defmacro with-prepared-statement (statement-var (db sql parameters-var) &body body)
-  (let ((i-var (gensym #-allegro "I" #+allegro "i"))
-        (value-var (gensym #-allegro "VALUE" #+allegro "value")))
+  (let ((i-var (gensym "I"))
+        (value-var (gensym "VALUE")))
     `(let ((,statement-var (prepare-statement ,db ,sql)))
        (unwind-protect
             (progn
@@ -244,8 +244,8 @@ Returns:
          (finalize-statement ,statement-var)))))
 
 (defmacro with-prepared-statement/named (statement-var (db sql parameters-var) &body body)
-  (let ((name-var (gensym #-allegro "NAME" #+allegro "name"))
-        (value-var (gensym #-allegro "VALUE" #+allegro "value")))
+  (let ((name-var (gensym "NAME"))
+        (value-var (gensym "VALUE")))
     `(let ((,statement-var (prepare-statement ,db ,sql)))
        (unwind-protect
             (progn
@@ -460,9 +460,8 @@ See BIND-PARAMETER for the list of supported parameter types."
           (progn ,@body)
        (disconnect ,db))))
 
-(defmacro-driver #-allegro (FOR vars IN-SQLITE-QUERY query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
-                 #+allegro (for vars in-sqlite-query query-expression on-database db &optional with-parameters parameters)
-  (let ((statement (gensym #-allegro "STATEMENT-" #+allegro "statement-"))
+(defmacro-driver (FOR vars IN-SQLITE-QUERY query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+  (let ((statement (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement = (prepare-statement ,db ,query-expression))
             (finally-protected (when ,statement (finalize-statement ,statement)))
@@ -478,9 +477,8 @@ See BIND-PARAMETER for the list of supported parameter types."
                                                   (collect `(statement-column-value ,statement ,i))))
                                   (terminate)))))))
 
-(defmacro-driver #-allegro (FOR vars IN-SQLITE-QUERY/NAMED query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
-                 #+allegro (for vars in-sqlite-query/named query-expression on-database db &optional with-parameters parameters)
-  (let ((statement (gensym #-allegro "STATEMENT-" #+allegro "statement-"))
+(defmacro-driver (FOR vars IN-SQLITE-QUERY/NAMED query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+  (let ((statement (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement = (prepare-statement ,db ,query-expression))
             (finally-protected (when ,statement (finalize-statement ,statement)))
@@ -496,9 +494,8 @@ See BIND-PARAMETER for the list of supported parameter types."
                                   (terminate)))))))
 
 
-(defmacro-driver #-allegro (FOR vars ON-SQLITE-STATEMENT statement)
-                 #+allegro (for vars on-sqlite-statement statement)
-  (let ((statement-var (gensym #-allegro "STATEMENT" #+allegro "statement-"))
+(defmacro-driver (FOR vars ON-SQLITE-STATEMENT statement)
+  (let ((statement-var (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement-var = ,statement)
             (,kwd ,(if (symbolp vars)
