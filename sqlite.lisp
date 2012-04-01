@@ -71,7 +71,7 @@
                    (not (eq (sqlite-error-code obj) :ok)))
               (sqlite-error-message obj))
       (format stream "~&Code ~A: ~A."
-              (or (sqlite-error-code obj) :OK)
+              (or (sqlite-error-code obj) :ok)
               (or (sqlite-error-message obj) "no message")))
     (when (sqlite-error-db-handle obj)
       (format stream "~&Database: ~A"
@@ -460,7 +460,7 @@ See BIND-PARAMETER for the list of supported parameter types."
           (progn ,@body)
        (disconnect ,db))))
 
-(defmacro-driver (FOR vars IN-SQLITE-QUERY query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+(defmacro-driver (for vars in-sqlite-query query-expression on-database db &optional with-parameters parameters)
   (let ((statement (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement = (prepare-statement ,db ,query-expression))
@@ -477,7 +477,7 @@ See BIND-PARAMETER for the list of supported parameter types."
                                                   (collect `(statement-column-value ,statement ,i))))
                                   (terminate)))))))
 
-(defmacro-driver (FOR vars IN-SQLITE-QUERY/NAMED query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+(defmacro-driver (for vars in-sqlite-query/named query-expression on-database db &optional with-parameters parameters)
   (let ((statement (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement = (prepare-statement ,db ,query-expression))
@@ -494,7 +494,7 @@ See BIND-PARAMETER for the list of supported parameter types."
                                   (terminate)))))))
 
 
-(defmacro-driver (FOR vars ON-SQLITE-STATEMENT statement)
+(defmacro-driver (for vars on-sqlite-statement statement)
   (let ((statement-var (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement-var = ,statement)
