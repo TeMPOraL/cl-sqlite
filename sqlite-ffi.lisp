@@ -3,6 +3,8 @@
   (:export :error-code
            :p-sqlite3
            :sqlite3-open
+           :sqlite3-open-v2
+           :sqlite3-open-flag
            :sqlite3-close
            :sqlite3-errmsg
            :sqlite3-busy-timeout
@@ -76,9 +78,38 @@
 
 (defctype p-sqlite3 (:pointer sqlite3))
 
+(defcenum sqlite3-open-flag
+  (:READONLY         #x00001)         ; /* Ok for sqlite3_open_v2() */
+  (:READWRITE        #x00002)         ; /* Ok for sqlite3_open_v2() */
+  (:CREATE           #x00004)         ; /* Ok for sqlite3_open_v2() */
+  (:DELETEONCLOSE    #x00008)         ; /* VFS only */
+  (:EXCLUSIVE        #x00010)         ; /* VFS only */
+  (:AUTOPROXY        #x00020)         ; /* VFS only */
+  (:URI              #x00040)         ; /* Ok for sqlite3_open_v2() */
+  (:MEMORY           #x00080)         ; /* Ok for sqlite3_open_v2() */
+  (:MAIN_DB          #x00100)         ; /* VFS only */
+  (:TEMP_DB          #x00200)         ; /* VFS only */
+  (:TRANSIENT_DB     #x00400)         ; /* VFS only */
+  (:MAIN_JOURNAL     #x00800)         ; /* VFS only */
+  (:TEMP_JOURNAL     #x01000)         ; /* VFS only */
+  (:SUBJOURNAL       #x02000)         ; /* VFS only */
+  (:MASTER_JOURNAL   #x04000)         ; /* VFS only */
+  (:NOMUTEX          #x08000)         ; /* Ok for sqlite3_open_v2() */
+  (:FULLMUTEX        #x10000)         ; /* Ok for sqlite3_open_v2() */
+  (:SHAREDCACHE      #x20000)         ; /* Ok for sqlite3_open_v2() */
+  (:PRIVATECACHE     #x40000)         ; /* Ok for sqlite3_open_v2() */
+  (:WAL              #x80000)         ; /* VFS only */
+  )
+
 (defcfun sqlite3-open error-code
   (filename :string)
   (db (:pointer p-sqlite3)))
+
+(defcfun sqlite3-open-v2 error-code
+  (filename :string)
+  (db (:pointer p-sqlite3))
+  (flags :int)
+  (zVfs :string))
 
 (defcfun sqlite3-close error-code
   (db p-sqlite3))
@@ -189,6 +220,12 @@
   (value :pointer)
   (bytes-count :int)
   (destructor :pointer))
+
+(defcfun sqlite3-libversion :string)
+
+(defcfun sqlite3-sourceid :string)
+
+(defcfun sqlite3-libversion-number :int)
 
 (defconstant destructor-transient-address (mod -1 (expt 2 (* 8 (cffi:foreign-type-size :pointer)))))
 
