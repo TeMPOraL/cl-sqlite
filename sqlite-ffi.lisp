@@ -79,26 +79,26 @@
 (defctype p-sqlite3 (:pointer sqlite3))
 
 (defcenum sqlite3-open-flag
-  (:READONLY         #x00001)         ; /* Ok for sqlite3_open_v2() */
-  (:READWRITE        #x00002)         ; /* Ok for sqlite3_open_v2() */
-  (:CREATE           #x00004)         ; /* Ok for sqlite3_open_v2() */
-  (:DELETEONCLOSE    #x00008)         ; /* VFS only */
-  (:EXCLUSIVE        #x00010)         ; /* VFS only */
-  (:AUTOPROXY        #x00020)         ; /* VFS only */
-  (:URI              #x00040)         ; /* Ok for sqlite3_open_v2() */
-  (:MEMORY           #x00080)         ; /* Ok for sqlite3_open_v2() */
-  (:MAIN_DB          #x00100)         ; /* VFS only */
-  (:TEMP_DB          #x00200)         ; /* VFS only */
-  (:TRANSIENT_DB     #x00400)         ; /* VFS only */
-  (:MAIN_JOURNAL     #x00800)         ; /* VFS only */
-  (:TEMP_JOURNAL     #x01000)         ; /* VFS only */
-  (:SUBJOURNAL       #x02000)         ; /* VFS only */
-  (:MASTER_JOURNAL   #x04000)         ; /* VFS only */
-  (:NOMUTEX          #x08000)         ; /* Ok for sqlite3_open_v2() */
-  (:FULLMUTEX        #x10000)         ; /* Ok for sqlite3_open_v2() */
-  (:SHAREDCACHE      #x20000)         ; /* Ok for sqlite3_open_v2() */
-  (:PRIVATECACHE     #x40000)         ; /* Ok for sqlite3_open_v2() */
-  (:WAL              #x80000)         ; /* VFS only */
+  (:readonly         #x00001)         ; /* Ok for sqlite3_open_v2() */
+  (:readwrite        #x00002)         ; /* Ok for sqlite3_open_v2() */
+  (:create           #x00004)         ; /* Ok for sqlite3_open_v2() */
+  (:deleteonclose    #x00008)         ; /* VFS only */
+  (:exclusive        #x00010)         ; /* VFS only */
+  (:autoproxy        #x00020)         ; /* VFS only */
+  (:uri              #x00040)         ; /* Ok for sqlite3_open_v2() */
+  (:memory           #x00080)         ; /* Ok for sqlite3_open_v2() */
+  (:main_db          #x00100)         ; /* VFS only */
+  (:temp_db          #x00200)         ; /* VFS only */
+  (:transient_db     #x00400)         ; /* VFS only */
+  (:main_journal     #x00800)         ; /* VFS only */
+  (:temp_journal     #x01000)         ; /* VFS only */
+  (:subjournal       #x02000)         ; /* VFS only */
+  (:master_journal   #x04000)         ; /* VFS only */
+  (:nomutex          #x08000)         ; /* Ok for sqlite3_open_v2() */
+  (:fullmutex        #x10000)         ; /* Ok for sqlite3_open_v2() */
+  (:sharedcache      #x20000)         ; /* Ok for sqlite3_open_v2() */
+  (:privatecache     #x40000)         ; /* Ok for sqlite3_open_v2() */
+  (:wal              #x80000)         ; /* VFS only */
   )
 
 (defcfun sqlite3-open error-code
