@@ -1,0 +1,664 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html> 
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>SQLITE - Sqlite package</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <style type="text/css">
+  pre { padding:5px; background-color:#e0e0e0 }
+  h3, h4 { text-decoration: underline; }
+  a { text-decoration: none; padding: 1px 2px 1px 2px; }
+  a:visited { text-decoration: none; padding: 1px 2px 1px 2px; }
+  a:hover { text-decoration: none; padding: 1px 1px 1px 1px; border: 1px solid #000000; } 
+  a:focus { text-decoration: none; padding: 1px 2px 1px 2px; border: none; }
+  a.none { text-decoration: none; padding: 0; }
+  a.none:visited { text-decoration: none; padding: 0; } 
+  a.none:hover { text-decoration: none; border: none; padding: 0; } 
+  a.none:focus { text-decoration: none; border: none; padding: 0; } 
+  a.noborder { text-decoration: none; padding: 0; } 
+  a.noborder:visited { text-decoration: none; padding: 0; } 
+  a.noborder:hover { text-decoration: none; border: none; padding: 0; } 
+  a.noborder:focus { text-decoration: none; border: none; padding: 0; }  
+  pre.none { padding:5px; background-color:#ffffff }
+  </style>
+</head>
+
+<body bgcolor=white>
+
+<div class="header">
+  <h1>CL-SQLITE</h1>
+</div>
+
+<blockquote>
+<br>&nbsp;<br><h3><a name=abstract class=none>Abstract</a></h3>
+
+<p>CL-SQLITE package is an interface to the SQLite embedded relational database engine.</p>
+
+<p>The code is in public domain so you can basically do with it whatever you want.</p>
+
+<p style='color: red;'>This documentation describes only the CL-SQLITE package, not the SQLite database itself. SQLite documentation is available at <a href="http://sqlite.org/docs.html">http://sqlite.org/docs.html</a></p>
+
+
+<p>CL-SQLITE together with this documentation can be downloaded from <a 
+href="http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.2.tar.gz">http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.2.tar.gz</a>.</p>
+
+<p>CL-SQLITE source code is available in Git repository at <code>git://repo.or.cz/cl-sqlite.git</code> (<a href="http://repo.or.cz/w/cl-sqlite.git">gitweb</a>) and at <code>git://github.com/TeMPOraL/cl-sqlite.git</code> (<a href="http://github.com/TeMPOraL/cl-sqlite/tree/master">gitweb</a>).</p>
+
+<p>
+</blockquote>
+
+<br>&nbsp;<br><h3><a class=none name="contents">Contents</a></h3>
+<ol>
+  <li><a href="#installation">Installation</a>
+  <li><a href="#example">Example</a>
+  <li><a href="#usage">Usage</a>
+  <li><a href="#dictionary">The SQLITE dictionary</a>
+    <ol>
+      <li><a href="#bind-parameter"><code>bind-parameter</code></a>
+      <li><a href="#clear-statement-bindings"><code>clear-statement-bindings</code></a>
+      <li><a href="#connect"><code>connect</code></a>
+      <li><a href="#disconnect"><code>disconnect</code></a>
+      <li><a href="#execute-non-query"><code>execute-non-query</code></a>
+      <li><a href="#execute-non-query/named"><code>execute-non-query/named</code></a>
+      <li><a href="#execute-one-row-m-v"><code>execute-one-row-m-v</code></a>
+      <li><a href="#execute-one-row-m-v/named"><code>execute-one-row-m-v/named</code></a>
+      <li><a href="#execute-single"><code>execute-single</code></a>
+      <li><a href="#execute-singled/named"><code>execute-single/named</code></a>
+      <li><a href="#execute-to-list"><code>execute-to-list</code></a>
+      <li><a href="#execute-to-list/named"><code>execute-to-list/named</code></a>
+      <li><a href="#finalize-statement"><code>finalize-statement</code></a>
+      <li><a href="#last-insert-rowid"><code>last-insert-rowid</code></a>
+      <li><a href="#prepare-statement"><code>prepare-statement</code></a>
+      <li><a href="#reset-statement"><code>reset-statement</code></a>
+      <li><a href="#sqlite-error"><code>sqlite-error</code></a>
+      <li><a href="#sqlite-constraint-error"><code>sqlite-constraint-error</code></a>
+      <li><a href="#sqlite-error-code"><code>sqlite-error-code</code></a>
+      <li><a href="#sqlite-error-db-handle"><code>sqlite-error-db-handle</code></a>
+      <li><a href="#sqlite-error-message"><code>sqlite-error-message</code></a>
+      <li><a href="#sqlite-error-sql"><code>sqlite-error-sql</code></a>
+      <li><a href="#sqlite-handle"><code>sqlite-handle</code></a>
+      <li><a href="#sqlite-statement"><code>sqlite-statement</code></a>
+      <li><a href="#statement-bind-parameter-names"><code>statement-bind-parameter-names</code></a>
+      <li><a href="#statement-column-names"><code>statement-column-names</code></a>
+      <li><a href="#statement-column-value"><code>statement-column-value</code></a>
+      <li><a href="#step-statement"><code>step-statement</code></a>
+      <li><a href="#with-transaction"><code>with-transaction</code></a>
+      <li><a href="#with-open-database"><code>with-open-database</code></a>
+    </ol>
+  <li><a href="#support">Support</a>
+  <li><a href="#changelog">Changelog</a>
+  <li><a href="#ack">Acknowledgements</a>
+</ol>
+
+<br>&nbsp;<br><h3><a class=none name="installation">Installation</a></h3>
+
+<p>The package can be downloaded from <a 
+href="http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.2.tar.gz">http://common-lisp.net/project/cl-sqlite/releases/cl-sqlite-0.2.tar.gz</a>. 
+CL-SQLITE package has the following dependencies:</p>
+<ul>
+  <li><a href="http://common-lisp.net/project/cffi/">CFFI</a></li>
+  <li><a href="http://common-lisp.net/project/iterate/">iterate</a></li>
+</ul>
+
+<p>SQLITE has a system definition for <a href="http://www.cliki.net/asdf">ASDF</a>. Compile and load it in the usual way.</p>
+
+<p>This package does not include SQLite library. It should be installed 
+and loadable with regular FFI mechanisms. On Linux and Mac OS X SQLite 
+is probably already installed (if it's not installed, use native package 
+manager to install it). On Windows PATH environment variable should 
+contain path to sqlite3.dll.</p>
+
+<br>&nbsp;<br><h3><a class=none name="example">Example</a></h3>
+
+<pre>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">use-package</span><span style="color: #000000;"> :sqlite</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">use-package</span><span style="color: #000000;"> :iter</span><span style="font-weight: bold;color: #0000ff;">)</span>
+
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #d22811;">defvar</span><span style="color: #000080;"> *db* </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">connect </span><span style="color: #dd0000;">":memory:"</span><span style="font-weight: bold;color: #0000ff;">))</span><span style="color: #000000;"> </span><span style="font-style: italic;color: #808080;">;;Connect to the sqlite database. :memory: is the temporary in-memory database</span>
+
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"create table users (id integer primary key, user_name text not null, age integer null)"</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-style: italic;color: #808080;">;;Create the table</span>
+
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (?, ?)"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"joe"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">18</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query/named *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (:user_name, :user_age)"</span><span style="color: #000000;"> </span>
+<span style="color: #000000">                         </span><span style="color: #dd0000;">":user_name"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"dvk"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">":user_age"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">22</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (?, ?)"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"qwe"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">30</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-non-query *db* </span><span style="color: #dd0000;">"insert into users (user_name, age) values (?, ?)"</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #000000;">nil</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #000000;">nil</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-style: italic;color: #808080;">;; ERROR: constraint failed</span>
+
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-single *db* </span><span style="color: #dd0000;">"select id from users where user_name = ?"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"dvk"</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; 2</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-one-row-m-v *db* </span><span style="color: #dd0000;">"select id, user_name, age from users where user_name = ?"</span><span style="color: #000000;"> </span><span style="color: #dd0000;">"joe"</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; (values 1 "joe" 18)</span>
+
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">execute-to-list *db* </span><span style="color: #dd0000;">"select id, user_name, age from users"</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; ((1 "joe" 18) (2 "dvk" 22) (3 "qwe" 30))</span>
+
+<span style="font-style: italic;color: #808080;">;; Use iterate</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">iter </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">for </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">id user-name age</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> in-sqlite-query </span><span style="color: #dd0000;">"select id, user_name, age from users where age &lt; ?"</span><span style="color: #000000;"> on-database *db* with-parameters </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #0000ff;">25</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="color: #000000;">      </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">collect </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">list</span><span style="color: #000000;"> id user-name age</span><span style="font-weight: bold;color: #0000ff;">)))</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; ((1 "joe" 18) (2 "dvk" 22))</span>
+
+<span style="font-style: italic;color: #808080;">;; Use iterate with named parameters</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">iter </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">for </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">id user-name age</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> in-sqlite-query/named </span><span style="color: #dd0000;">"select id, user_name, age from users where age &lt; :age"</span>
+<span style="color: #000000;">      on-database *db* with-parameters </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #dd0000;">":age"</span><span style="color: #000000"> </span><span style="color: #0000ff;">25</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="color: #000000;">      </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">collect </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">list</span><span style="color: #000000;"> id user-name age</span><span style="font-weight: bold;color: #0000ff;">)))</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; ((1 "joe" 18) (2 "dvk" 22))</span>
+
+<span style="font-style: italic;color: #808080;">;; Use prepared statements directly</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">loop</span>
+<span style="color: #000000;">   with statement </span><span style="font-weight: bold;color: #d22811;">=</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">prepare-statement *db* </span><span style="color: #dd0000;">"select id, user_name, age from users where age &lt; ?"</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   initially </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">bind-parameter statement </span><span style="color: #0000ff;">1</span><span style="color: #000000;"> </span><span style="color: #0000ff;">25</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   while </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">step-statement statement</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   collect </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">list</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">0</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">1</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">2</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="color: #000000;">   finally </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">finalize-statement statement</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; ((1 "joe" 18) (2 "dvk" 22))</span>
+
+<span style="font-style: italic;color: #808080;">;; Use prepared statements with named parameters</span>
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">loop</span>
+<span style="color: #000000;">   with statement </span><span style="font-weight: bold;color: #d22811;">=</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">prepare-statement *db* </span><span style="color: #dd0000;">"select id, user_name, age from users where age &lt; :age"</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   initially </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">bind-parameter statement </span><span style="color: #ff0000;">":age"</span><span style="color: #000000;"> </span><span style="color: #0000ff;">25</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   while </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">step-statement statement</span><span style="font-weight: bold;color: #0000ff;">)</span>
+<span style="color: #000000;">   collect </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="font-weight: bold;color: #000000;">list</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">0</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">1</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">statement-column-value statement </span><span style="color: #0000ff;">2</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="color: #000000;">   finally </span><span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">finalize-statement statement</span><span style="font-weight: bold;color: #0000ff;">))</span>
+<span style="font-style: italic;color: #808080;">;; =&gt; ((1 "joe" 18) (2 "dvk" 22))</span>
+
+<span style="font-weight: bold;color: #0000ff;">(</span><span style="color: #000000;">disconnect *db*</span><span style="font-weight: bold;color: #0000ff;">)</span><span style="color: #000000;"> </span><span style="font-style: italic;color: #808080;">;;Disconnect</span></pre>
+
+<br>&nbsp;<br><h3><a class=none name="usage">Usage</a></h3>
+
+<p>Two functions and a macro are used to manage connections to the database:</p>
+<ul>
+<li>Function <a href="#connect">connect</a> connects to the database</li>
+<li>Function <a href="#disconnect">disconnect</a> disconnects from the database</li>
+<li>Macro <a href="#with-open-database">with-open-database</a> opens the database and ensures that it is properly closed after the code is run</li>
+</ul>
+
+<p>To make queries to the database the following functions are provided:</p>
+<ul>
+<li><a href="#execute-non-query">execute-non-query</a> (<a href="#execute-non-query/named">execute-non-query/named</a>) executes the query and returns nothing</li>
+<li><a href="#execute-single">execute-single</a> (<a href="#execute-single/named">execute-single/named</a>) returns the first column of the first row of the result</li>
+<li><a href="#execute-one-row-m-v">execute-one-row-m-v</a> (<a href="#execute-one-row-m-v/named">execute-one-row-m-v/named</a>) returns the first row of the result as multiple values</li>
+<li><a href="#execute-to-list">execute-to-list</a> (<a href="#execute-to-list/named">execute-to-list/named</a>) returns all rows as the list of lists</li>
+</ul>
+
+<p>Macro <a href="#with-transaction">with-transaction</a> is used to execute code within transaction.</p>
+
+<p>Support for <a href="http://common-lisp.net/project/iterate/">ITERATE</a> is provided. Use the following clause:
+  <blockquote><pre>(for (<i>vars</i>) in-sqlite-query <i>sql</i> on-database <i>db</i> &optional with-parameters (<i>&rest parameters</i>))</pre></blockquote>
+This clause will bind <i>vars</i> (a list of variables) to the values of the columns of query.</p>
+
+<p>Additionally, it is possible to use the prepared statements API of sqlite. Create the prepared statement with <a href="#prepare-statement">prepare-statement</a>, bind its parameters with <a href="#bind-parameter">bind-parameter</a>, step through it with <a href="#step-statement">step-statement</a>, retrieve the results with <a href="#statement-column-value">statement-column-value</a>, and finally reset it to be used again with <a href="#reset-statement">reset-statement</a> or dispose of it with <a href="#finalize-statement">finalize-statement</a>.</p>
+
+<p>Positional and named parameters in queries are supported. Positional parameters are denoted by question mark in SQL code, and named parameters are denoted by prefixing color (:), at sign (@) or dollar sign ($) before parameter name.</p>
+
+<p>Following types are supported:</p>
+<ul>
+  <li>Integer. Integers are stored as 64-bit integers.</li>
+  <li>Float. Stored as double. Single-float, double-float and rational may be passed as a parameter, and double-float will be returned.</li>
+  <li>String. Stored as an UTF-8 string.</li>
+  <li>Vector of bytes. Stored as a blob.</li>
+  <li>Null. Passed as NIL to and from database.</li>
+</ul>
+
+<br>&nbsp;<br><h3><a class=none name="dictionary">The SQLITE dictionary</a></h3>
+
+
+
+<!-- Entry for BIND-PARAMETER -->
+
+<p><br>[Function]<br><a class=none name='bind-parameter'><b>bind-parameter</b> <i>statement parameter value</i></a>
+<blockquote><br>
+
+Sets the <i>parameter</i> in <i>statement</i> to the <i>value</i>.<br>
+<i>parameter</i> is an index (parameters are numbered from one) or the name of a parameter.<br>
+Supported types:<br>
+<ul>
+<li>Null. Passed as NULL
+<li>Integer. Passed as an 64-bit integer
+<li>String. Passed as a string
+<li>Float. Passed as a double
+<li>(vector (unsigned-byte 8)) and vector that contains integers in range [0,256). Passed as a BLOB
+</ul>
+
+</blockquote>
+
+<!-- End of entry for BIND-PARAMETER -->
+
+<!-- Entry for CLEAR-STATEMENT-BINDINGS -->
+
+<p><br>[Function]<br><a class=none name='clear-statement-bindings'><b>clear-statement-bindings</b> <i>statement</i></a>
+<blockquote><br>
+
+Binds all parameters of the statement to NULL.
+
+</blockquote>
+
+<!-- End of entry for CLEAR-STATEMENT-BINDINGS -->
+
+<!-- Entry for CONNECT -->
+
+<p><br>[Function]<br><a class=none name='connect'><b>connect</b> <i>database-path</i> <i>&amp;key</i> <i>busy-timeout</i> =&gt; <i>sqlite-handle</i></a>
+<blockquote><br>
+
+Connect to the sqlite database at the given <i>database-path</i> (<i>database-path</i> is a string or a pathname). If <i>database-path</i> equal to <code>":memory:"</code> is given, a new in-memory database is created. Returns the <a href="#sqlite-handle">sqlite-handle</a> connected to the database. Use <a href="disconnect">disconnect</a> to disconnect.<br>
+
+Operations will wait for locked databases for up to <i>busy-timeout</i> milliseconds; if <i>busy-timeout</i> is NIL, then operations on locked databases will fail immediately.
+
+</blockquote>
+
+<!-- End of entry for CONNECT -->
+
+
+<!-- Entry for DISCONNECT -->
+
+<p><br>[Function]<br><a class=none name='disconnect'><b>disconnect</b> <i>handle</i></a>
+<blockquote><br>
+
+Disconnects the given <i>handle</i> from the database. All further operations on the handle and on prepared statements (including freeing handle or statements) are invalid and will lead to memory corruption.
+
+</blockquote>
+
+<!-- End of entry for DISCONNECT -->
+
+
+<!-- Entry for EXECUTE-NON-QUERY -->
+
+<p><br>[Function]<br><a class=none name='execute-non-query'><b>execute-non-query</b> <i>db sql <tt>&amp;rest</tt> parameters</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns nothing.<br>
+
+Example:<br>
+
+<pre>(execute-non-query db &quot;insert into users (user_name, real_name) values (?, ?)&quot; &quot;joe&quot; &quot;Joe the User&quot;)</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-NON-QUERY -->
+
+
+<!-- Entry for EXECUTE-NON-QUERY/NAMED -->
+
+<p><br>[Function]<br><a class=none name='execute-non-query/named'><b>execute-non-query/named</b> <i>db sql <tt>&amp;rest</tt> parameters</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns nothing. Parameters are alternating names and values.<br>
+
+Example:<br>
+
+<pre>(execute-non-query/named db &quot;insert into users (user_name, real_name) values (:user_name, :real_name)&quot;
+                         &quot;:user_name&quot; &quot;joe&quot; &quot;:real_name&quot; &quot;Joe the User&quot;)</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-NON-QUERY -->
+
+
+<!-- Entry for EXECUTE-ONE-ROW-M-V -->
+
+<p><br>[Function]<br><a class=none name='execute-one-row-m-v'><b>execute-one-row-m-v</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; (values <i>result*</i>)</a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the first row as multiple values.<br>
+
+Example:<br>
+<pre>(execute-one-row-m-v db &quot;select id, user_name, real_name from users where id = ?&quot; 1)
+=&gt;
+(values 1 &quot;joe&quot; &quot;Joe the User&quot;)</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-ONE-ROW-M-V -->
+
+
+<!-- Entry for EXECUTE-ONE-ROW-M-V/NAMED -->
+
+<p><br>[Function]<br><a class=none name='execute-one-row-m-v'><b>execute-one-row-m-v/named</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; (values <i>result*</i>)</a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the first row as multiple values. Parameters are alternating names and values.<br>
+
+Example:<br>
+<pre>(execute-one-row-m-v/named db &quot;select id, user_name, real_name from users where id = :id&quot; &quot;:id&quot; 1)
+=&gt;
+(values 1 &quot;joe&quot; &quot;Joe the User&quot;)</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-ONE-ROW-M-V -->
+
+
+<!-- Entry for EXECUTE-SINGLE -->
+
+<p><br>[Function]<br><a class=none name='execute-single'><b>execute-single</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; <i>result</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the first column of the first row as single value.<br>
+
+Example:<br>
+<pre>(execute-single db &quot;select user_name from users where id = ?&quot; 1)
+=&gt;
+&quot;joe&quot;</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-SINGLE -->
+
+
+<!-- Entry for EXECUTE-SINGLE/NAMED -->
+
+<p><br>[Function]<br><a class=none name='execute-single/named'><b>execute-single/named</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; <i>result</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the first column of the first row as single value. Parameters are alternating names and values.<br>
+
+Example:<br>
+<pre>(execute-single/named db &quot;select user_name from users where id = :id&quot; &quot;:id&quot; 1)
+=&gt;
+&quot;joe&quot;</pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-SINGLE -->
+
+
+<!-- Entry for EXECUTE-TO-LIST -->
+
+<p><br>[Function]<br><a class=none name='execute-to-list'><b>execute-to-list</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; <i>results</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the results as list of lists.<br>
+
+Example:<br>
+
+<pre>(execute-to-list db &quot;select id, user_name, real_name from users where user_name = ?&quot; &quot;joe&quot;)
+=&gt;
+((1 &quot;joe&quot; &quot;Joe the User&quot;)
+ (2 &quot;joe&quot; &quot;Another Joe&quot;)) </pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-TO-LIST -->
+
+
+<!-- Entry for EXECUTE-TO-LIST -->
+
+<p><br>[Function]<br><a class=none name='execute-to-list/named'><b>execute-to-list/named</b> <i>db sql <tt>&amp;rest</tt> parameters</i> =&gt; <i>results</i></a>
+<blockquote><br>
+
+Executes the query <i>sql</i> to the database <i>db</i> with given <i>parameters</i>. Returns the results as list of lists. Parameters are alternating names and values.<br>
+
+Example:<br>
+
+<pre>(execute-to-list db &quot;select id, user_name, real_name from users where user_name = :name&quot; &quot;:name&quot; &quot;joe&quot;)
+=&gt;
+((1 &quot;joe&quot; &quot;Joe the User&quot;)
+ (2 &quot;joe&quot; &quot;Another Joe&quot;)) </pre>
+
+See <a href="#bind-parameter">bind-parameter</a> for the list of supported parameter types.
+
+</blockquote>
+
+<!-- End of entry for EXECUTE-TO-LIST -->
+
+
+<!-- Entry for FINALIZE-STATEMENT -->
+
+<p><br>[Function]<br><a class=none name='finalize-statement'><b>finalize-statement</b> <i>statement</i></a>
+<blockquote><br>
+
+Finalizes the <i>statement</i> and signals that associated resources may be released.<br>
+Note: does not immediately release resources because statements are cached.
+
+</blockquote>
+
+<!-- End of entry for FINALIZE-STATEMENT -->
+
+
+<!-- Entry for LAST-INSERT-ROWID -->
+
+<p><br>[Function]<br><a class=none name='last-insert-rowid'><b>last-insert-rowid</b> <i>db</i> =&gt; <i>result</i></a>
+<blockquote><br>
+
+Returns the auto-generated ID of the last inserted row on the database connection <i>db</i>.
+
+</blockquote>
+
+<!-- End of entry for LAST-INSERT-ROWID -->
+
+
+<!-- Entry for PREPARE-STATEMENT -->
+
+<p><br>[Function]<br><a class=none name='prepare-statement'><b>prepare-statement</b> <i>db sql</i> =&gt; <i>sqlite-statement</i></a>
+<blockquote><br>
+
+Prepare the statement to the DB that will execute the commands that are in <i>sql</i>.<br>
+
+Returns the <a href="#sqlite-statement">sqlite-statement</a>.<br>
+
+<i>sql</i> must contain exactly one statement.<br>
+<i>sql</i> may have some positional (not named) parameters specified with question marks.<br>
+
+Example:<br>
+
+<pre>(prepare-statement db &quot;select name from users where id = ?&quot;)</pre>
+
+</blockquote>
+
+<!-- End of entry for PREPARE-STATEMENT -->
+
+
+<!-- Entry for RESET-STATEMENT -->
+
+<p><br>[Function]<br><a class=none name='reset-statement'><b>reset-statement</b> <i>statement</i></a>
+<blockquote><br>
+
+Resets the <i>statement</i> and prepares it to be called again. Note that bind parameter values are not cleared; use <a href="#clear-statement-bindings">clear-statement-bindings</a> for that.
+
+</blockquote>
+
+<!-- End of entry for RESET-STATEMENT -->
+
+<!-- Entry for SQLITE-ERROR -->
+
+<p><br>[Condition]<br><a class=none name='sqlite-error'><b>sqlite-error</b></a>
+<blockquote><br>
+
+Error condition used by the library.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR -->
+
+<!-- Entry for SQLITE-CONSTRAINT-ERROR -->
+
+<p><br>[Condition]<br><a class=none name='sqlite-constraint-error'><b>sqlite-constraint-error</b></a>
+<blockquote><br>
+
+A subclass of sqlite-error used to distinguish constraint violation errors.
+</blockquote>
+
+<!-- End of entry for SQLITE-CONSTRAINT-ERROR -->
+
+<!-- Entry for SQLITE-ERROR-CODE -->
+
+<p><br>[Accessor]<br><a class=none name='sqlite-error-code'><b>sqlite-error-code</b> <i>sqlite-error</i> =&gt; <i>keyword or null</i></a>
+<blockquote><br>
+
+Returns the SQLite error code represeting the error.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR-CODE -->
+
+<!-- Entry for SQLITE-ERROR-DB-HANDLE -->
+
+<p><br>[Accessor]<br><a class=none name='sqlite-error-db-handle'><b>sqlite-error-db-handle</b> <i>sqlite-error</i> =&gt; <i>sqlite-handle or null</i></a>
+<blockquote><br>
+
+Returns the SQLite database connection that caused the error.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR-DB-HANDLE -->
+
+<!-- Entry for SQLITE-ERROR-MESSAGE -->
+
+<p><br>[Accessor]<br><a class=none name='sqlite-error-message'><b>sqlite-error-message</b> <i>sqlite-error</i> =&gt; <i>string or null</i></a>
+<blockquote><br>
+
+Returns the SQLite error message corresponding to the error code.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR-MESSAGE -->
+
+<!-- Entry for SQLITE-ERROR-SQL -->
+
+<p><br>[Accessor]<br><a class=none name='sqlite-error-sql'><b>sqlite-error-sql</b> <i>sqlite-error</i> =&gt; <i>string or null</i></a>
+<blockquote><br>
+
+Returns the SQL statement source string that caused the error.
+</blockquote>
+
+<!-- End of entry for SQLITE-ERROR-SQL -->
+
+<!-- Entry for SQLITE-HANDLE -->
+
+<p><br>[Standard class]<br><a class=none name='sqlite-handle'><b>sqlite-handle</b></a>
+<blockquote><br>
+
+Class that encapsulates the connection to the database.
+
+</blockquote>
+
+<!-- End of entry for SQLITE-HANDLE -->
+
+
+<!-- Entry for SQLITE-STATEMENT -->
+
+<p><br>[Standard class]<br><a class=none name='sqlite-statement'><b>sqlite-statement</b></a>
+<blockquote><br>
+
+Class that represents the prepared statement.
+
+</blockquote>
+
+<!-- End of entry for SQLITE-STATEMENT -->
+
+<!-- Entry for STATEMENT-BIND-PARAMETER-NAMES -->
+
+<p><br>[Accessor]<br><a class=none name='statement-bind-parameter-names'><b>statement-bind-parameter-names</b> <i>statement</i> =&gt; <i>list of strings</i></a>
+<blockquote><br>
+
+Returns the names of the bind parameters of the prepared statement. If a parameter does not have a name, the corresponding list item is NIL.
+</blockquote>
+
+<!-- End of entry for STATEMENT-BIND-PARAMETER-NAMES -->
+
+<!-- Entry for STATEMENT-COLUMN-NAMES -->
+
+<p><br>[Accessor]<br><a class=none name='statement-column-names'><b>statement-column-names</b> <i>statement</i> =&gt; <i>list of strings</i></a>
+<blockquote><br>
+
+Returns the names of columns in the result set of the prepared statement.
+</blockquote>
+
+<!-- End of entry for STATEMENT-COLUMN-NAMES -->
+
+<!-- Entry for STATEMENT-COLUMN-VALUE -->
+
+<p><br>[Function]<br><a class=none name='statement-column-value'><b>statement-column-value</b> <i>statement column-number</i> =&gt; <i>result</i></a>
+<blockquote><br>
+
+Returns the <i>column-number</i>-th column&#039;s value of the current row of the <i>statement</i>. Columns are numbered from zero.<br>
+Returns:<br>
+<ul>
+<li>NIL for NULL
+<li>integer for integers
+<li>double-float for floats
+<li>string for text
+<li>(simple-array (unsigned-byte 8)) for BLOBs
+</ul>
+</blockquote>
+
+<!-- End of entry for STATEMENT-COLUMN-VALUE -->
+
+
+<!-- Entry for STEP-STATEMENT -->
+
+<p><br>[Function]<br><a class=none name='step-statement'><b>step-statement</b> <i>statement</i> =&gt; <i>boolean</i></a>
+<blockquote><br>
+
+Steps to the next row of the resultset of <i>statement</i>.<br>
+Returns T is successfully advanced to the next row and NIL if there are no more rows.
+
+</blockquote>
+
+<!-- End of entry for STEP-STATEMENT -->
+
+
+<!-- Entry for WITH-TRANSACTION -->
+
+<p><br>[Macro]<br><a class=none name='with-transaction'><b>with-transaction</b> <i>db</i> <tt>&amp;body</tt> <i>body</i></i></a>
+<blockquote><br>
+
+Wraps the <i>body</i> inside the transaction. If <i>body</i> evaluates without error, transaction is commited. If evaluation of <i>body</i> is interrupted, transaction is rolled back.
+
+</blockquote>
+
+<!-- End of entry for WITH-TRANSACTION -->
+
+
+<!-- Entry for WITH-OPEN-DATABASE -->
+
+<p><br>[Macro]<br><a class=none name='with-open-database'><b>with-open-database</b> (<i>db</i> <i>path</i> <i>&amp;key</i> <i>busy-timeout</i>) <tt>&amp;body</tt> <i>body</i></i></a>
+<blockquote><br>
+
+Executes the <i>body</i> with <i>db</i> being bound to the database handle for database located at <i>path</i>. Database is open before the <i>body</i> is run and it is ensured that database is closed after the evaluation of <i>body</i> finished or interrupted.<br>
+See <a href="#connect">CONNECT</a> for meaning of <i>busy-timeout</i> parameter.
+
+</blockquote>
+
+<!-- End of entry for WITH-OPEN-DATABASE -->
+
+<br>&nbsp;<br><h3><a class=none name="support">Support</a></h3>
+
+This package is written by <a href="mailto:Kalyanov.Dmitry@gmail.com">Kalyanov Dmitry</a>.<br>
+
+This project has a <a href="http://common-lisp.net/mailman/listinfo/cl-sqlite-devel">cl-sqlite-devel</a> mailing list.<br>
+
+<br>&nbsp;<br><h3><a class=none name="changelog">Changelog</a></h3>
+
+<ul>
+  <li><span style="color:gray">23 Jan 2009</span> <strong>0.1</strong> Initial version
+  <li><span style="color:gray">03 Mar 2009</span> <strong>0.1.1</strong> Fixed bug with access to recently freed memory during statement preparation
+  <li><span style="color:gray">22 Mar 2009</span> <strong>0.1.2</strong> <a href="#disconnect">disconnect</a> function now ensures that all non-finalized statements are finalized before closing the database (otherwise errors are signaled when database is being closed).
+  <li><span style="color:gray">28 Apr 2009</span> <strong>0.1.3</strong> Added support for passing all values of type REAL (including RATIONAL) as query parameter. cl-sqlite is made available as git repository.
+  <li><span style="color:gray">10 May 2009</span> <strong>0.1.4</strong> Added test suite (based on <a href="http://common-lisp.net/project/bese/FiveAM.html">FiveAM</a> testing framework); changed foreign library definition to work on Mac OS X (thanks to Patrick Stein) and removed the dependency on sqlite3_next_stmt function that appeared only in sqlite 3.6.0 (making cl-sqlite work with older sqlite versions)
+  <li><span style="color:gray">13 June 2009</span> <strong>0.1.5</strong> Allow passing pathnames to <a href="#connect">CONNECT</a> function.
+  <li><span style="color:gray">24 Oct 2009</span> <strong>0.1.6</strong> Add busy-timeout argument to <a href="#connect">CONNECT</a>. Fix library defininitions for running on Microsoft Windows.
+  <li><span style="color:gray">14 Nov 2010</span> <strong>0.2</strong> Added support for named parameters. Made statement reset and connection close more safe by clearing statements' bindings and unbinding slot of connection object. Added error condition for SQLite errors. Changes are courtesy of Alexander Gavrilov.
+  <li><span style="color:gray">02 Aug 2019</span> <strong>0.2.1</strong> Added metadata to system definitions. Fixed symbol conflict with FiveAM in tests. Project maintenance is now handled by Jacek Złydach.
+</ul>
+
+<br>&nbsp;<br><h3><a class=none name="ack">Acknowledgements</a></h3>
+
+<p>
+This documentation was prepared with <a href="http://weitz.de/documentation-template/">DOCUMENTATION-TEMPLATE</a>.
+</p>
+<p>
+$Header: /usr/local/cvsrep/documentation-template/output.lisp,v 1.14 2008/05/29 08:23:37 edi Exp $
+
+</body>
+</html>
