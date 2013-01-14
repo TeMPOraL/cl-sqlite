@@ -127,9 +127,16 @@
   (statement p-sqlite3-stmt)
   (column-number :int))
 
-(defcfun sqlite3-column-text :string
+(defcfun ("sqlite3_column_text" sqlite3-column-text-pointer) :pointer
   (statement p-sqlite3-stmt)
   (column-number :int))
+
+(defun sqlite3-column-text (statement column-number)
+  "Wraper around sqlite3-column-text-pointer to deal with strings
+   containing embedded NULs."
+  (cffi:foreign-string-to-lisp
+   (sqlite3-column-text-pointer statement column-number)
+   :count (sqlite3-column-bytes statement column-number)))
 
 (defcfun sqlite3-column-int64 :int64
   (statement p-sqlite3-stmt)
