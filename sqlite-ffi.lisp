@@ -3,6 +3,8 @@
   (:export :error-code
            :p-sqlite3
            :sqlite3-open
+           :sqlite3-open-v2
+           :sqlite3-open-flag
            :sqlite3-close
            :sqlite3-errmsg
            :sqlite3-busy-timeout
@@ -42,43 +44,72 @@
 (use-foreign-library sqlite3-lib)
 
 (defcenum error-code
-  (:OK 0)
-  (:ERROR 1)
-  (:INTERNAL 2)
-  (:PERM 3)
-  (:ABORT 4)
-  (:BUSY 5)
-  (:LOCKED 6)
-  (:NOMEM 7)
-  (:READONLY 8)
-  (:INTERRUPT 9)
-  (:IOERR 10)
-  (:CORRUPT 11)
-  (:NOTFOUND 12)
-  (:FULL 13)
-  (:CANTOPEN 14)
-  (:PROTOCOL 15)
-  (:EMPTY 16)
-  (:SCHEMA 17)
-  (:TOOBIG 18)
-  (:CONSTRAINT 19)
-  (:MISMATCH 20)
-  (:MISUSE 21)
-  (:NOLFS 22)
-  (:AUTH 23)
-  (:FORMAT 24)
-  (:RANGE 25)
-  (:NOTADB 26)
-  (:ROW 100)
-  (:DONE 101))
+  (:ok 0)
+  (:error 1)
+  (:internal 2)
+  (:perm 3)
+  (:abort 4)
+  (:busy 5)
+  (:locked 6)
+  (:nomem 7)
+  (:readonly 8)
+  (:interrupt 9)
+  (:ioerr 10)
+  (:corrupt 11)
+  (:notfound 12)
+  (:full 13)
+  (:cantopen 14)
+  (:protocol 15)
+  (:empty 16)
+  (:schema 17)
+  (:toobig 18)
+  (:constraint 19)
+  (:mismatch 20)
+  (:misuse 21)
+  (:nolfs 22)
+  (:auth 23)
+  (:format 24)
+  (:range 25)
+  (:notadb 26)
+  (:row 100)
+  (:done 101))
 
 (defcstruct sqlite3)
 
 (defctype p-sqlite3 (:pointer sqlite3))
 
+(defcenum sqlite3-open-flag
+  (:readonly         #x00001)         ; /* Ok for sqlite3_open_v2() */
+  (:readwrite        #x00002)         ; /* Ok for sqlite3_open_v2() */
+  (:create           #x00004)         ; /* Ok for sqlite3_open_v2() */
+  (:deleteonclose    #x00008)         ; /* VFS only */
+  (:exclusive        #x00010)         ; /* VFS only */
+  (:autoproxy        #x00020)         ; /* VFS only */
+  (:uri              #x00040)         ; /* Ok for sqlite3_open_v2() */
+  (:memory           #x00080)         ; /* Ok for sqlite3_open_v2() */
+  (:main_db          #x00100)         ; /* VFS only */
+  (:temp_db          #x00200)         ; /* VFS only */
+  (:transient_db     #x00400)         ; /* VFS only */
+  (:main_journal     #x00800)         ; /* VFS only */
+  (:temp_journal     #x01000)         ; /* VFS only */
+  (:subjournal       #x02000)         ; /* VFS only */
+  (:master_journal   #x04000)         ; /* VFS only */
+  (:nomutex          #x08000)         ; /* Ok for sqlite3_open_v2() */
+  (:fullmutex        #x10000)         ; /* Ok for sqlite3_open_v2() */
+  (:sharedcache      #x20000)         ; /* Ok for sqlite3_open_v2() */
+  (:privatecache     #x40000)         ; /* Ok for sqlite3_open_v2() */
+  (:wal              #x80000)         ; /* VFS only */
+  )
+
 (defcfun sqlite3-open error-code
   (filename :string)
   (db (:pointer p-sqlite3)))
+
+(defcfun sqlite3-open-v2 error-code
+  (filename :string)
+  (db (:pointer p-sqlite3))
+  (flags :int)
+  (zVfs :string))
 
 (defcfun sqlite3-close error-code
   (db p-sqlite3))
@@ -189,6 +220,12 @@
   (value :pointer)
   (bytes-count :int)
   (destructor :pointer))
+
+(defcfun sqlite3-libversion :string)
+
+(defcfun sqlite3-sourceid :string)
+
+(defcfun sqlite3-libversion-number :int)
 
 (defconstant destructor-transient-address (mod -1 (expt 2 (* 8 (cffi:foreign-type-size :pointer)))))
 

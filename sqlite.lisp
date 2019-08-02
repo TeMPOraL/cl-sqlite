@@ -7,6 +7,7 @@
            :sqlite-error-message
            :sqlite-error-sql
            :sqlite-handle
+           :sqlite-v2-handle
            :connect
            :set-busy-timeout
            :disconnect
@@ -71,7 +72,7 @@
                    (not (eq (sqlite-error-code obj) :ok)))
               (sqlite-error-message obj))
       (format stream "~&Code ~A: ~A."
-              (or (sqlite-error-code obj) :OK)
+              (or (sqlite-error-code obj) :ok)
               (or (sqlite-error-message obj) "no message")))
     (when (sqlite-error-db-handle obj)
       (format stream "~&Database: ~A"
@@ -88,22 +89,45 @@
    (statements :initform nil :accessor sqlite-handle-statements))
   (:documentation "Class that encapsulates the connection to the database. Use connect and disconnect."))
 
+(defclass sqlite-v2-handle (sqlite-handle)
+  ((open-flags :initarg :open-flags :accessor open-flags :initform (list :readwrite :create))
+   (vfs :accessor vfs :initform nil))
+  (:documentation "Just like sqlite-handle but uses the sqlite_open_v2
+interface to connect. This allows a readonly connection (or a
+connectien without sqlite_open_create)."))
+
+(defgeneric sqlite-handle-open (handle database-path db-pointer)
+  (:documentation "A wrapper around sqlite-ffi:sqlite3-open(-v2)."))
+
+(defmethod sqlite-handle-open ((handle sqlite-handle) database-path db-pointer)
+  (sqlite-ffi:sqlite3-open database-path db-pointer))
+
+(defmethod sqlite-handle-open ((handle sqlite-v2-handle) database-path db-pointer)
+  (sqlite-ffi:sqlite3-open-v2 database-path db-pointer
+                              (reduce #'logior
+                                      (mapcar (lambda (flag)
+                                                (cffi:foreign-enum-value 'sqlite-ffi:sqlite3-open-flag flag))
+                                              (open-flags handle)))
+                              (cffi:null-pointer)))
+
 (defmethod initialize-instance :after ((object sqlite-handle) &key (database-path ":memory:") &allow-other-keys)
   (cffi:with-foreign-object (ppdb 'sqlite-ffi:p-sqlite3)
-    (let ((error-code (sqlite-ffi:sqlite3-open database-path ppdb)))
+    (let ((error-code (sqlite-handle-open object database-path ppdb)))
       (if (eq error-code :ok)
           (setf (handle object) (cffi:mem-ref ppdb 'sqlite-ffi:p-sqlite3)
                 (database-path object) database-path)
           (sqlite-error error-code (list "Could not open sqlite3 database ~A" database-path)))))
   (setf (cache object) (make-instance 'sqlite.cache:mru-cache :cache-size 16 :destructor #'really-finalize-statement)))
 
-(defun connect (database-path &key busy-timeout)
+(defun connect (database-path &key busy-timeout flags)
   "Connect to the sqlite database at the given DATABASE-PATH. Returns the SQLITE-HANDLE connected to the database. Use DISCONNECT to disconnect.
    Operations will wait for locked databases for up to BUSY-TIMEOUT milliseconds; if BUSY-TIMEOUT is NIL, then operations on locked databases will fail immediately."
-  (let ((db (make-instance 'sqlite-handle
-                           :database-path (etypecase database-path
-                                            (string database-path)
-                                            (pathname (namestring database-path))))))
+  (let* ((database-path (etypecase database-path
+                                     (string database-path)
+                                     (pathname (namestring database-path))))
+         (db (if flags
+                 (make-instance 'sqlite-v2-handle :database-path database-path :flags flags)
+                 (make-instance 'sqlite-handle :database-path database-path))))
     (when busy-timeout
       (set-busy-timeout db busy-timeout))
     db))
@@ -460,7 +484,7 @@ See BIND-PARAMETER for the list of supported parameter types."
           (progn ,@body)
        (disconnect ,db))))
 
-(defmacro-driver (FOR vars IN-SQLITE-QUERY query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+(defmacro-driver (for vars in-sqlite-query query-expression on-database db &optional with-parameters parameters)
   (let ((statement (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement = (prepare-statement ,db ,query-expression))
@@ -477,7 +501,7 @@ See BIND-PARAMETER for the list of supported parameter types."
                                                   (collect `(statement-column-value ,statement ,i))))
                                   (terminate)))))))
 
-(defmacro-driver (FOR vars IN-SQLITE-QUERY/NAMED query-expression ON-DATABASE db &optional WITH-PARAMETERS parameters)
+(defmacro-driver (for vars in-sqlite-query/named query-expression on-database db &optional with-parameters parameters)
   (let ((statement (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement = (prepare-statement ,db ,query-expression))
@@ -494,7 +518,7 @@ See BIND-PARAMETER for the list of supported parameter types."
                                   (terminate)))))))
 
 
-(defmacro-driver (FOR vars ON-SQLITE-STATEMENT statement)
+(defmacro-driver (for vars on-sqlite-statement statement)
   (let ((statement-var (gensym "STATEMENT-"))
         (kwd (if generate 'generate 'for)))
     `(progn (with ,statement-var = ,statement)
