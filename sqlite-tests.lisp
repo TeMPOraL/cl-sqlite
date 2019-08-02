@@ -1,12 +1,12 @@
 (defpackage :sqlite-tests
   (:use :cl :sqlite :5am :iter :bordeaux-threads)
-  (:export :run-all-tests))
+  (:export :run-all-sqlite-tests))
 
 (in-package :sqlite-tests)
 
 (def-suite sqlite-suite)
 
-(defun run-all-tests ()
+(defun run-all-sqlite-tests ()
   (run! 'sqlite-suite))
 
 (in-suite sqlite-suite)
