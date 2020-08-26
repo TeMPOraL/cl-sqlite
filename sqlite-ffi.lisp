@@ -30,7 +30,8 @@
            :sqlite3-bind-blob
            :destructor-transient
            :destructor-static
-           :sqlite3-last-insert-rowid))
+           :sqlite3-last-insert-rowid
+           :sqlite3-enable-load-extension))
 
 (in-package :sqlite-ffi)
 
@@ -198,3 +199,7 @@
 
 (defcfun sqlite3-last-insert-rowid :int64
   (db p-sqlite3))
+
+(defcfun sqlite3-enable-load-extension :int
+  (db p-sqlite3)
+  (onoff :int))
