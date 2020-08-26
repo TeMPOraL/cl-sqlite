@@ -29,6 +29,7 @@
            :execute-non-query/named
            :execute-one-row-m-v
            :last-insert-rowid
+           :enable-load-extension
            :with-transaction
            :with-open-database))
 
@@ -438,6 +439,10 @@ See BIND-PARAMETER for the list of supported parameter types."
 (defun last-insert-rowid (db)
   "Returns the auto-generated ID of the last inserted row on the database connection DB."
   (sqlite-ffi:sqlite3-last-insert-rowid (handle db)))
+
+(defun enable-load-extension (db enable)
+  "Enable extension loading, or disable it if ENABLE is NIL."
+  (sqlite-ffi:sqlite3-enable-load-extension (handle db) (if enable 1 0)))
 
 (defmacro with-transaction (db &body body)
   "Wraps the BODY inside the transaction."
