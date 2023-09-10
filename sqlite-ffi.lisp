@@ -74,7 +74,7 @@
 
 (defcstruct sqlite3)
 
-(defctype p-sqlite3 (:pointer sqlite3))
+(defctype p-sqlite3 (:pointer (:struct sqlite3)))
 
 (defcfun sqlite3-open error-code
   (filename :string)
@@ -92,7 +92,7 @@
 
 (defcstruct sqlite3-stmt)
 
-(defctype p-sqlite3-stmt (:pointer sqlite3-stmt))
+(defctype p-sqlite3-stmt (:pointer (:struct sqlite3-stmt)))
 
 (defcfun (sqlite3-prepare "sqlite3_prepare_v2") error-code
   (db p-sqlite3)
