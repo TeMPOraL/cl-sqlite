@@ -386,8 +386,9 @@ Supported types:
                         (double-float (sqlite-ffi:sqlite3-bind-double (handle statement) index value))
                         (real (sqlite-ffi:sqlite3-bind-double (handle statement) index (coerce value 'double-float)))
                         (string (sqlite-ffi:sqlite3-bind-text (handle statement) index value -1 (sqlite-ffi:destructor-transient)))
-                        ((vector (unsigned-byte 8)) (cffi:with-pointer-to-vector-data (ptr value)
-                                                      (sqlite-ffi:sqlite3-bind-blob (handle statement) index ptr (length value) (sqlite-ffi:destructor-transient))))
+                        ((vector (unsigned-byte 8)) (babel-encodings:with-checked-simple-vector ((value value) (start 0) (end nil))
+                                                      (cffi:with-pointer-to-vector-data (ptr value)
+                                                        (sqlite-ffi:sqlite3-bind-blob (handle statement) index (cffi:inc-pointer ptr start) (- end start) (sqlite-ffi:destructor-transient)))))
                         (vector (cffi:with-foreign-object (array :unsigned-char (length value))
                                   (loop
                                      for i from 0 below (length value)
