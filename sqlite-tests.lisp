@@ -107,6 +107,14 @@
                (is (equalp (fetch-all) '()))))
         (finalize-statement statement)))))
 
+(test test-text-containing-null-bytes
+  (let ((string-with-nulls (concatenate 'string "foo" '(#\null) "bar" '(#\null) "baz")))
+    (with-open-database (db ":memory:")
+      (execute-non-query db "create table test (str text)")
+      (execute-non-query db "insert into test (str) values (?)" string-with-nulls)
+      (is (string= (execute-single db "select str from test")
+                   string-with-nulls)))))
+
 #+thread-support
 (defparameter *db-file* "/tmp/test.sqlite")
 

@@ -13,7 +13,7 @@
                (:file "cache")
                (:file "sqlite" :depends-on ("sqlite-ffi" "cache")))
 
-  :depends-on (:iterate :cffi)
+  :depends-on (:iterate :cffi :babel)
 
   :in-order-to ((test-op (load-op sqlite-tests))))
 
